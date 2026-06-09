@@ -1,6 +1,6 @@
 # Program tábora
 
-Webová aplikace pro správu programu letního tábora.  
+Webová aplikace pro správu programu letního tábora.
 
 ## Co aplikace umí
 
@@ -30,4 +30,4 @@ python flask_app.py
 
 Aplikace poběží na `http://localhost:5000`.
 
-Pro výchozí přístupová hesla kontaktujte autora
+Pro výchozí přístupová hesla kontaktujte autora.

@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+{% block title %}Celkový přehled – {{ camp.name }}{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+  <a href="{{ url_for('index') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h5 class="mb-0"><i class="bi bi-journal-text me-1"></i>Celkový přehled — {{ camp.name }}</h5>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-bordered table-sm align-middle" style="min-width:700px">
+    <tbody>
+      {% set day_names = ['Po','Út','St','Čt','Pá','So','Ne'] %}
+      {% set meal_rows = [('snidane','🍳'),('dop_svacina','🥪'),('obed','🍽️'),('odp_svacina','🍎'),('vecere','🥘')] %}
+      {% set ncols = slots|length %}
+      {% for dd in days_data %}
+        {% set nrows = 5 + troops|length %}
+
+        {# ── Záhlaví dne ── #}
+        <tr style="background:#e9ecef;{% if not loop.first %}border-top:3px solid #adb5bd{% endif %}">
+          <th style="min-width:65px;font-weight:normal;color:#212529;font-size:.8rem">Den</th>
+          <th style="min-width:95px;font-weight:normal;color:#212529;font-size:.8rem">Program</th>
+          {% for slot in slots %}
+            <th style="font-weight:normal;color:#212529;font-size:.8rem">
+              {{ slot.name }}<br>
+              <span style="font-size:.72rem;color:#555">{{ slot.time_from }}–{{ slot.time_to }}</span>
+            </th>
+          {% endfor %}
+        </tr>
+
+        {# ── Služba ── #}
+        <tr>
+          <td rowspan="{{ nrows }}" class="align-top text-nowrap fw-bold" style="font-size:.85rem">
+            <a href="{{ url_for('program_day', camp_id=camp.id, date_str=dd.day.isoformat()) }}"
+               class="text-decoration-none text-dark">
+              {{ day_names[dd.day.weekday()] }}<br>
+              {{ dd.day.strftime('%-d. %-m.') }}
+            </a>
+          </td>
+          <td class="text-nowrap" style="font-size:.75rem;color:#2e7d32;background:#e8f5e9;font-weight:normal">
+            <i class="bi bi-robot me-1"></i>Služba
+          </td>
+          <td colspan="{{ ncols }}" style="background:#e8f5e9">
+            {% if dd.day_services %}
+              <div class="d-flex flex-wrap gap-4">
+                {% for si in dd.day_services %}
+                  <div>
+                    <div style="font-size:.82rem">
+                      <i class="bi bi-robot me-1 text-success"></i>Služba {{ si.template.slot_number }}
+                      <span class="text-muted ms-1" style="font-size:.78rem">{{ si.template.time_from }}–{{ si.template.time_to }}</span>
+                    </div>
+                    <div style="font-size:.80rem">
+                      {% if si.troops %}
+                        {% for t in si.troops %}
+                          <span class="troop-badge me-1" style="background:{{ t.color }}"></span>{{ t.name }}{% if not loop.last %} + {% endif %}
+                        {% endfor %}
+                      {% else %}
+                        <span class="text-danger">— nevyplněno</span>
+                      {% endif %}
+                      <span class="text-muted ms-2">
+                        <i class="bi bi-person-star me-1"></i>{% if si.adv and si.adv.name %}rádce dne: {{ si.adv.name }}{% else %}— nevyplněno{% endif %}
+                      </span>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <span class="text-muted small">—</span>
+            {% endif %}
+          </td>
+        </tr>
+
+        {# ── Jídelníček ── #}
+        <tr>
+          <td class="text-nowrap" style="font-size:.75rem;color:#f57f17;background:#fffde7;font-weight:normal">
+            <i class="bi bi-egg-fried me-1"></i>Jídelníček
+          </td>
+          <td colspan="{{ ncols }}" style="background:#fffde7">
+            <div class="d-flex flex-column gap-1">
+              {% for mt, emoji in meal_rows %}
+                {% set meal = dd.meal_map.get(mt) %}
+                <div style="font-size:.80rem">
+                  {{ emoji }} {{ MEAL_LABELS[mt] }}:
+                  {% if meal and meal.description %}{{ meal.description }}
+                  {% else %}<span class="text-muted">nevyplněno</span>{% endif %}
+                </div>
+              {% endfor %}
+            </div>
+          </td>
+        </tr>
+
+        {# ── Výzvy ── #}
+        <tr>
+          <td class="text-nowrap" style="font-size:.75rem;color:#E65100">
+            <i class="bi bi-trophy-fill me-1"></i>Výzvy
+          </td>
+          {% for slot in slots %}
+            {% set chs = dd.slot_challenge_map.get(slot.id, []) %}
+            {% if chs %}
+              <td class="text-center">
+                <div class="d-flex flex-column gap-1 align-items-center">
+                  {% for ch in chs %}
+                    <span class="badge" style="background:{{ CHALLENGE_COLORS[ch.challenge] }};font-size:.62rem;white-space:normal;line-height:1.3">
+                      <i class="bi bi-trophy-fill me-1"></i>{{ CHALLENGE_NAMES[ch.challenge] }} {{ AREA_ICONS[ch.area] }}
+                    </span>
+                  {% endfor %}
+                </div>
+              </td>
+            {% else %}
+              <td class="text-center"><span class="text-muted small">—</span></td>
+            {% endif %}
+          {% endfor %}
+        </tr>
+
+        {# ── Táborová hra ── #}
+        {% set shown_hra = [] %}
+        <tr>
+          <td class="text-nowrap" style="font-size:.75rem;color:#1565c0">
+            <i class="bi bi-dice-5-fill me-1"></i>Táborová hra
+          </td>
+          {% for slot in slots %}
+            {% set game = dd.game_slot_map_hra.get(slot.id) %}
+            {% if game and game.id not in shown_hra %}
+              {% set ns_g = namespace(gspan=0) %}
+              {% for s2 in slots %}{% if s2.id in game.get_slot_ids() %}{% set ns_g.gspan = ns_g.gspan + 1 %}{% endif %}{% endfor %}
+              <td class="text-center" {% if ns_g.gspan > 1 %}colspan="{{ ns_g.gspan }}"{% endif %}>
+                <span style="font-size:.82rem">{{ game.title or '— bez názvu' }}</span>
+                <div class="mt-1 d-flex flex-wrap gap-1 justify-content-center">
+                  {% if game.physical_intensity %}
+                    <span class="intensity-badge intensity-{{ game.physical_intensity }}">
+                      <i class="bi {{ INTENSITY_ICONS[game.physical_intensity] }} me-1"></i>{{ INTENSITY_LABELS[game.physical_intensity] }}
+                    </span>
+                  {% endif %}
+                  {% if game_is_night(game, last_slot_time_to) %}
+                    <span class="badge bg-dark" style="font-size:.65rem"><i class="bi bi-moon-stars-fill me-1"></i>Noční · konec {{ game.time_to }}</span>
+                  {% endif %}
+                  {% if game.cancels_troop_program %}
+                    <span class="badge bg-danger" style="font-size:.65rem"><i class="bi bi-x-circle me-1"></i>Ruší program</span>
+                  {% endif %}
+                  {% if ns_g.gspan > 1 %}
+                    <span class="badge bg-secondary" style="font-size:.65rem">sloučeno {{ ns_g.gspan }} slotů</span>
+                  {% endif %}
+                </div>
+              </td>
+              {% for s2 in slots %}{% if s2.id in game.get_slot_ids() %}{%- if shown_hra.append(game.id) %}{% endif -%}{% endif %}{% endfor %}
+            {% elif game and game.id in shown_hra %}
+              {# covered by colspan #}
+            {% else %}
+              <td class="text-center"><span class="text-muted small">—</span></td>
+            {% endif %}
+          {% endfor %}
+        </tr>
+
+        {# ── Celotáborové aktivity ── #}
+        {% set shown_akt = [] %}
+        <tr>
+          <td class="text-nowrap" style="font-size:.75rem;color:#2e7d32">
+            <i class="bi bi-fire me-1"></i>Celotáb. aktivita
+          </td>
+          {% for slot in slots %}
+            {% set game = dd.game_slot_map_aktivita.get(slot.id) %}
+            {% if game and game.id not in shown_akt %}
+              {% set ns_g = namespace(gspan=0) %}
+              {% for s2 in slots %}{% if s2.id in game.get_slot_ids() %}{% set ns_g.gspan = ns_g.gspan + 1 %}{% endif %}{% endfor %}
+              <td class="text-center" {% if ns_g.gspan > 1 %}colspan="{{ ns_g.gspan }}"{% endif %}>
+                <span style="font-size:.82rem">{{ game.title or '— bez názvu' }}</span>
+                <div class="mt-1 d-flex flex-wrap gap-1 justify-content-center">
+                  {% if game.physical_intensity %}
+                    <span class="intensity-badge intensity-{{ game.physical_intensity }}">
+                      <i class="bi {{ INTENSITY_ICONS[game.physical_intensity] }} me-1"></i>{{ INTENSITY_LABELS[game.physical_intensity] }}
+                    </span>
+                  {% endif %}
+                  {% if game_is_night(game, last_slot_time_to) %}
+                    <span class="badge bg-dark" style="font-size:.65rem"><i class="bi bi-moon-stars-fill me-1"></i>Noční · konec {{ game.time_to }}</span>
+                  {% endif %}
+                  {% if game.cancels_troop_program %}
+                    <span class="badge bg-danger" style="font-size:.65rem"><i class="bi bi-x-circle me-1"></i>Ruší program</span>
+                  {% endif %}
+                  {% if ns_g.gspan > 1 %}
+                    <span class="badge bg-secondary" style="font-size:.65rem">sloučeno {{ ns_g.gspan }} slotů</span>
+                  {% endif %}
+                </div>
+              </td>
+              {% for s2 in slots %}{% if s2.id in game.get_slot_ids() %}{%- if shown_akt.append(game.id) %}{% endif -%}{% endif %}{% endfor %}
+            {% elif game and game.id in shown_akt %}
+              {# covered by colspan #}
+            {% else %}
+              <td class="text-center"><span class="text-muted small">—</span></td>
+            {% endif %}
+          {% endfor %}
+        </tr>
+
+        {# ── Oddíly / Družiny ── #}
+        {# ns_span sleduje sloty již vykreslené jako rowspan buňka (sdíleno přes všechny oddíly) #}
+        {% set ns_span = namespace(shown_cancel=[], shown_akt=[]) %}
+        {% for troop in troops %}
+          {% set slot_entry_map = dd.troop_slot_maps[troop.id] %}
+          {% set shown_entries  = [] %}
+          <tr>
+            <td class="text-nowrap" style="font-size:.75rem">
+              <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{{ troop.color }};margin-right:4px"></span>
+              {{ troop.name }}
+            </td>
+            {% for slot in slots %}
+              {% set entry     = slot_entry_map.get(slot.id) %}
+              {% set cancelled = slot.id in dd.cancelled_slots and troop.id not in dd.cancel_exceptions_map.get(slot.id, []) %}
+              {% set akt_game  = dd.game_slot_map_aktivita.get(slot.id) %}
+              {% set hra_game  = dd.game_slot_map_hra.get(slot.id) %}
+
+              {% if entry and entry.id not in shown_entries %}
+                {# Vlastní program oddílu – colspan pokud sloučeno #}
+                {% set ns = namespace(span=0) %}
+                {% for s2 in slots %}{% if s2.id in entry.get_slot_ids() %}{% set ns.span = ns.span + 1 %}{% endif %}{% endfor %}
+                {# Souběžná hra/aktivita (neruší program) #}
+                {% set _conc = akt_game if (akt_game and not akt_game.cancels_troop_program and troop.id not in akt_game.get_except_troop_ids()) else (hra_game if (hra_game and not hra_game.cancels_troop_program and troop.id not in hra_game.get_except_troop_ids()) else None) %}
+                <td class="text-center" {% if ns.span > 1 %}colspan="{{ ns.span }}"{% endif %}>
+                  <span style="font-size:.82rem">{{ entry.title or '—' }}</span>
+                  {% if entry.teepee %}
+                    <i class="bi bi-wifi ms-1" title="Tee-pee rezervováno"
+                       style="transform:rotate(180deg);display:inline-block;color:#6B5B3E;font-size:.78rem"></i>
+                  {% endif %}
+                  {% if _conc %}
+                    {% set _gt = _conc.entry_type or 'hra' %}
+                    {% set _gc = GAME_TYPE_COLORS[_gt] %}
+                    <div style="font-size:.68rem;margin-top:2px">
+                      <i class="bi {{ GAME_TYPE_ICONS[_gt] }} {{ _gc.text }} me-1"></i>
+                      <span style="color:{{ _gc.border }}">{{ _conc.title or GAME_TYPE_LABELS[_gt] }}</span>
+                    </div>
+                  {% endif %}
+                </td>
+                {% for s2 in slots %}{% if s2.id in entry.get_slot_ids() %}{%- if shown_entries.append(entry.id) %}{% endif -%}{% endif %}{% endfor %}
+
+              {% elif entry and entry.id in shown_entries %}
+                {# Pokryto colspanen #}
+
+              {% elif slot.id in dd.full_span_cancelled_slots %}
+                {% if slot.id not in ns_span.shown_cancel %}
+                  {# First occurrence – render rowspan × colspan cell for all troops.
+                     Cancelling game can be either 'hra' or 'aktivita'. #}
+                  {% set game = hra_game if hra_game else akt_game %}
+                  {% if game %}
+                    {% set ns_g = namespace(gspan=0) %}
+                    {% for s2 in slots %}{% if s2.id in game.get_slot_ids() %}{% set ns_g.gspan = ns_g.gspan + 1 %}{% endif %}{% endfor %}
+                    <td class="text-center align-middle"
+                        rowspan="{{ troops|length }}"
+                        {% if ns_g.gspan > 1 %}colspan="{{ ns_g.gspan }}"{% endif %}>
+                      {% if hra_game %}
+                        <i class="bi bi-dice-5-fill text-primary me-1" style="font-size:.8rem"></i>
+                      {% else %}
+                        <i class="bi bi-fire text-success me-1" style="font-size:.8rem"></i>
+                      {% endif %}
+                      <span style="font-size:.80rem">{{ game.title or ('Táborová hra' if hra_game else 'Celotáborová aktivita') }}</span>
+                    </td>
+                    {% for s2 in slots %}{% if s2.id in game.get_slot_ids() %}{%- if ns_span.shown_cancel.append(s2.id) %}{% endif -%}{% endif %}{% endfor %}
+                  {% endif %}
+                {% else %}
+                  {# Pokryto rowspanen – přeskočit #}
+                {% endif %}
+
+              {% elif slot.id in dd.full_span_akt_slots %}
+                {% if slot.id not in ns_span.shown_akt %}
+                  {% set game = akt_game %}
+                  {% set ns_g = namespace(gspan=0) %}
+                  {% for s2 in slots %}{% if s2.id in game.get_slot_ids() %}{% set ns_g.gspan = ns_g.gspan + 1 %}{% endif %}{% endfor %}
+                  <td class="text-center align-middle"
+                      rowspan="{{ troops|length }}"
+                      {% if ns_g.gspan > 1 %}colspan="{{ ns_g.gspan }}"{% endif %}>
+                    <i class="bi bi-fire text-success me-1" style="font-size:.8rem"></i>
+                    <span style="font-size:.80rem">{{ game.title or 'Celotáborová aktivita' }}</span>
+                  </td>
+                  {% for s2 in slots %}{% if s2.id in game.get_slot_ids() %}{%- if ns_span.shown_akt.append(s2.id) %}{% endif -%}{% endif %}{% endfor %}
+                {% else %}
+                  {# Pokryto rowspanen – přeskočit #}
+                {% endif %}
+
+              {% elif cancelled %}
+                {# Hra ruší program, ale jen pro část oddílů (jiné mají vlastní záznam) #}
+                <td class="text-center">
+                  {% if hra_game %}
+                    <i class="bi bi-dice-5-fill text-primary me-1" style="font-size:.8rem"></i>
+                    <span style="font-size:.80rem">{{ hra_game.title or 'Táborová hra' }}</span>
+                  {% endif %}
+                </td>
+
+              {% elif akt_game %}
+                {# Aktivita, jen pro část oddílů #}
+                <td class="text-center">
+                  <i class="bi bi-fire text-success me-1" style="font-size:.8rem"></i>
+                  <span style="font-size:.80rem">{{ akt_game.title or 'Celotáborová aktivita' }}</span>
+                </td>
+
+              {% else %}
+                <td class="text-center"><span class="text-muted small">—</span></td>
+              {% endif %}
+            {% endfor %}
+          </tr>
+        {% endfor %}
+
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

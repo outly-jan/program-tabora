@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% block title %}Program oddílu / družiny – {{ troop.name }}{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center gap-2 mb-3">
+  <a href="{{ url_for('program_day', camp_id=camp.id, date_str=day.isoformat()) }}"
+     class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+  <h5 class="mb-0">
+    <span class="troop-badge me-1" style="background:{{ troop.color }};display:inline-block;width:14px;height:14px;border-radius:50%"></span>
+    {{ troop.name }} — {{ slot.name }}
+    <span class="text-muted fw-normal small">{{ day.strftime('%-d. %-m. %Y') }}</span>
+  </h5>
+</div>
+
+<div class="alert alert-info py-2 small">
+  <i class="bi bi-info-circle"></i>
+  Prosím, edituj pouze program svého oddílu / družiny.
+</div>
+
+<form method="post" class="card shadow-sm">
+  <div class="card-body">
+    <input type="hidden" name="camp_id"  value="{{ camp.id }}">
+    <input type="hidden" name="troop_id" value="{{ troop.id }}">
+    <input type="hidden" name="date"     value="{{ day.isoformat() }}">
+    <input type="hidden" name="slot_id"  value="{{ slot.id }}">
+    <input type="hidden" name="next"     value="{{ next_url or '' }}">
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Název programu</label>
+      <input type="text" name="title" maxlength="200"
+             class="form-control"
+             value="{{ existing.title if existing else '' }}"
+             placeholder="Max. 200 znaků">
+    </div>
+
+    <div class="row g-2 mb-3">
+      <div class="col-6">
+        <label class="form-label">Začátek</label>
+        <input type="time" name="time_from" class="form-control" step="300"
+               value="{{ existing.time_from if existing else slot.time_from }}">
+      </div>
+      <div class="col-6">
+        <label class="form-label">Konec</label>
+        <input type="time" name="time_to" class="form-control" step="300"
+               value="{{ existing.time_to if existing else slot.time_to }}">
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Sloučit se sousedními sloty</label>
+      <div class="small text-muted mb-2">Po zaškrtnutí se zobrazí možnost přidat další sousední slot.</div>
+      {% if all_slots|length > 1 %}
+        {% for s in all_slots %}
+          {% if s.id != slot.id %}
+            <div class="form-check merge-item" id="mwrap_{{ s.id }}">
+              <input class="form-check-input merge-cb" type="checkbox" name="merge_slots"
+                     value="{{ s.id }}" id="ms_{{ s.id }}"
+                     {% if existing and s.id in existing.get_slot_ids() %}checked{% endif %}>
+              <label class="form-check-label" for="ms_{{ s.id }}">
+                {{ s.name }} <span class="text-muted">({{ s.time_from }}–{{ s.time_to }})</span>
+              </label>
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <div class="text-muted small">Žádné sousední sloty nejsou k dispozici.</div>
+      {% endif %}
+    </div>
+    <script>
+    (function(){
+      const primaryId  = {{ slot.id }};
+      const order      = {{ all_slots | map(attribute='id') | list | tojson }};
+      const primaryIdx = order.indexOf(primaryId);
+
+      function refresh() {
+        const sel = new Set([primaryId]);
+        document.querySelectorAll('.merge-cb:checked').forEach(cb => sel.add(+cb.value));
+        const selIdx = order.map((id,i) => sel.has(id) ? i : -1).filter(i => i >= 0);
+        const lo = Math.min(...selIdx), hi = Math.max(...selIdx);
+
+        order.forEach((id, i) => {
+          if (id === primaryId) return;
+          const wrap = document.getElementById('mwrap_' + id);
+          const cb   = document.getElementById('ms_'    + id);
+          if (!wrap || !cb) return;
+          // Zobrazit: checked sloty + přímí sousedé rozsahu
+          wrap.style.display = (sel.has(id) || i === lo-1 || i === hi+1) ? '' : 'none';
+          // Lze odškrtnout jen krajní (ne primární) sloty
+          const isMid = cb.checked && !(i === lo || i === hi) && i !== primaryIdx;
+          cb.disabled = isMid;
+          // Disabled checkboxes don't submit – mirror via hidden input
+          let hid = document.getElementById('hid_ms_' + id);
+          if (isMid && !hid) {
+            hid = document.createElement('input');
+            hid.type = 'hidden'; hid.name = 'merge_slots'; hid.value = id;
+            hid.id = 'hid_ms_' + id;
+            wrap.appendChild(hid);
+          } else if (!isMid && hid) { hid.remove(); }
+        });
+      }
+
+      document.querySelectorAll('.merge-cb').forEach(cb => cb.addEventListener('change', refresh));
+      refresh();
+    })();
+    </script>
+
+    <hr>
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold">
+        <i class="bi bi-people-fill text-success me-1"></i>
+        Sdílet program s dalšími oddíly / družinami
+      </label>
+      <div class="small text-muted mb-2">
+        Program se zkopíruje zaškrtnutým oddílům / družinám. Pokud již mají v tomto slotu záznam nebo jsou na službě, sdílení se neprovede a zobrazí se upozornění.
+        <br><span class="text-primary"><i class="bi bi-info-circle me-1"></i>Pokud zaškrtneš <strong>všechny</strong> oddíly / družiny, program se automaticky převede na celotáborovou aktivitu.</span>
+      </div>
+      {% if other_troops %}
+        {% for t in other_troops %}
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox"
+                   name="share_with_troop_id" value="{{ t.id }}"
+                   id="share_{{ t.id }}"
+                   {% if t.id in existing_shared_troop_ids %}checked{% endif %}>
+            <label class="form-check-label d-flex align-items-center gap-2" for="share_{{ t.id }}">
+              <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:{{ t.color }};flex-shrink:0"></span>
+              {{ t.name }}
+            </label>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="text-muted small">Žádné další oddíly / družiny v táboře.</div>
+      {% endif %}
+    </div>
+
+    <hr>
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold">
+        <i class="bi bi-wifi me-1" style="color:#6B5B3E;transform:rotate(180deg);display:inline-block"></i>
+        Tee-pee
+      </label>
+      {% if teepee_conflict %}
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="teepee_cb" disabled>
+          <label class="form-check-label text-muted" for="teepee_cb">
+            Rezervovat tee-pee
+          </label>
+        </div>
+        <div class="small text-danger mt-1">
+          <i class="bi bi-exclamation-circle me-1"></i>
+          Tee-pee je v tento čas obsazeno:
+          <strong>{{ teepee_conflict.who }}</strong> — {{ teepee_conflict.what }}
+          <span class="text-muted">({{ teepee_conflict.time }})</span>
+        </div>
+      {% else %}
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="teepee" value="1" id="teepee_cb"
+                 {% if own_teepee %}checked{% endif %}>
+          <label class="form-check-label" for="teepee_cb">
+            Rezervovat tee-pee
+          </label>
+        </div>
+        {% if own_teepee %}
+          <div class="small text-success mt-1">
+            <i class="bi bi-check-circle me-1"></i>Tee-pee je pro tento blok rezervováno.
+          </div>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-check-lg"></i> Uložit
+      </button>
+      <a href="{{ next_url or url_for('program_day', camp_id=camp.id, date_str=day.isoformat()) }}"
+         class="btn btn-outline-secondary">Zrušit</a>
+    </div>
+  </div>
+</form>
+
+{# ── Pomůcky, materiál ── #}
+<div class="card shadow-sm mt-3">
+  <div class="card-body">
+    <label class="form-label fw-semibold">
+      <i class="bi bi-tools me-1 text-secondary"></i>Pomůcky, materiál
+    </label>
+
+    {% if existing %}
+      {% if items %}
+        <ul class="list-group mb-3">
+          {% for item in items %}
+            {% if edit_item_id == item.id %}
+              <li class="list-group-item py-2">
+                <form method="post" action="{{ url_for('edit_program_item', item_id=item.id) }}"
+                      class="d-flex gap-2 align-items-center">
+                  <input type="hidden" name="camp_id"  value="{{ camp.id }}">
+                  <input type="hidden" name="troop_id" value="{{ troop.id }}">
+                  <input type="hidden" name="date"     value="{{ day.isoformat() }}">
+                  <input type="hidden" name="slot_id"  value="{{ slot.id }}">
+                  <input type="text" name="name" value="{{ item.name }}"
+                         class="form-control form-control-sm" required autofocus>
+                  <button type="submit" class="btn btn-sm btn-primary text-nowrap">Uložit</button>
+                  <a href="{{ url_for('edit_entry', camp_id=camp.id, troop_id=troop.id, date=day.isoformat(), slot_id=slot.id) }}"
+                     class="btn btn-sm btn-outline-secondary text-nowrap">Zrušit</a>
+                </form>
+              </li>
+            {% else %}
+              <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                <span>{{ item.name }}</span>
+                <div class="d-flex gap-1 ms-2 flex-shrink-0">
+                  <a href="{{ url_for('edit_entry', camp_id=camp.id, troop_id=troop.id, date=day.isoformat(), slot_id=slot.id, edit_item=item.id) }}"
+                     class="btn btn-sm btn-outline-secondary">Upravit</a>
+                  <form method="post" action="{{ url_for('delete_program_item', item_id=item.id) }}">
+                    <input type="hidden" name="camp_id"  value="{{ camp.id }}">
+                    <input type="hidden" name="troop_id" value="{{ troop.id }}">
+                    <input type="hidden" name="date"     value="{{ day.isoformat() }}">
+                    <input type="hidden" name="slot_id"  value="{{ slot.id }}">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Smazat</button>
+                  </form>
+                </div>
+              </li>
+            {% endif %}
+          {% endfor %}
+        </ul>
+      {% endif %}
+
+      <form method="post" action="{{ url_for('add_program_item') }}" class="d-flex gap-2">
+        <input type="hidden" name="entry_id" value="{{ existing.id }}">
+        <input type="hidden" name="camp_id"  value="{{ camp.id }}">
+        <input type="hidden" name="troop_id" value="{{ troop.id }}">
+        <input type="hidden" name="date"     value="{{ day.isoformat() }}">
+        <input type="hidden" name="slot_id"  value="{{ slot.id }}">
+        <input type="text" name="name" class="form-control form-control-sm"
+               placeholder="Název pomůcky / materiálu" required>
+        <button type="submit" class="btn btn-sm btn-outline-secondary text-nowrap">
+          <i class="bi bi-plus"></i> Přidat
+        </button>
+      </form>
+
+    {% else %}
+      <div class="text-muted small">
+        <i class="bi bi-info-circle me-1"></i>
+        Nejprve uložte programový blok, poté bude možné přidávat pomůcky.
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

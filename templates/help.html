@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+{% block title %}Nápověda – Program tábora{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center gap-2 mb-4">
+  <a href="{{ url_for('index') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h4 class="mb-0"><i class="bi bi-question-circle me-2"></i>Nápověda – Program tábora</h4>
+</div>
+
+<div class="row">
+<div class="col-lg-8">
+
+{# Obsah #}
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <h6 class="text-muted mb-2">Obsah</h6>
+    <ol class="mb-0" style="line-height:2">
+      <li><a href="#uvod" class="text-decoration-none">Úvodní stránka</a></li>
+      <li><a href="#program-oddilu" class="text-decoration-none">Celý program oddílu</a></li>
+      <li><a href="#zadani" class="text-decoration-none">Zadání nebo úprava programu</a></li>
+      <li><a href="#smazani" class="text-decoration-none">Smazání programu</a></li>
+      <li><a href="#pomucky" class="text-decoration-none">Pomůcky a materiál</a></li>
+      <li><a href="#denni" class="text-decoration-none">Denní program</a></li>
+      <li><a href="#jidelnicek" class="text-decoration-none">Jídelníček</a></li>
+      <li><a href="#sluzby" class="text-decoration-none">Přehled služeb</a></li>
+      <li><a href="#hry" class="text-decoration-none">Táborová hra a celotáborové aktivity</a></li>
+      <li><a href="#vyzvy" class="text-decoration-none">Výzvy</a></li>
+      <li><a href="#teepee" class="text-decoration-none">Tee-pee</a></li>
+      <li><a href="#prehled" class="text-decoration-none">Celkový přehled</a></li>
+      <li><a href="#historie" class="text-decoration-none">Historie změn</a></li>
+    </ol>
+  </div>
+</div>
+
+{# 1 #}
+<div id="uvod" class="card shadow-sm mb-3">
+  <div class="card-header bg-dark text-white fw-semibold">
+    <i class="bi bi-house-fill me-2"></i>1. Úvodní stránka
+  </div>
+  <div class="card-body">
+    <p>Úvodní stránka je rozdělená do tří sekcí:</p>
+    <ul>
+      <li><strong>Přehledy dle oblastí</strong> – přímé odkazy na přehledy jídelníčku, služeb, táborové hry, celotáborových aktivit, výzev, tee-pee a celkového přehledu.</li>
+      <li><strong>Poslední změny</strong> (vespod stránky) – výpis posledních 10 uložených úprav v programu. Kliknutím na <em>Zobrazit historii</em> zobrazíš celý přehled změn se stránkováním po 20 položkách.</li>
+      <li><strong>Program oddílů / družin</strong> – kliknutím na svůj oddíl nebo družinu se dostaneš na celkový přehled jejich programu.</li>
+      <li><strong>Zobrazení dle dnů</strong> – kalendář tábora. Kliknutím na konkrétní den zobrazíš detailní denní program.</li>
+    </ul>
+  </div>
+</div>
+
+{# 2 #}
+<div id="program-oddilu" class="card shadow-sm mb-3">
+  <div class="card-header bg-dark text-white fw-semibold">
+    <i class="bi bi-table me-2"></i>2. Celý program oddílu
+  </div>
+  <div class="card-body">
+    <p>Klikni na tlačítko svého oddílu na úvodní stránce. Zobrazí se tabulka se všemi dny tábora a časovými bloky. Pro každý den vidíš:</p>
+    <ul>
+      <li><strong>Vyplněný program</strong> – název aktivity, čas, případně sdílení s dalšími oddíly</li>
+      <li><i class="bi bi-fire text-success me-1"></i><strong>Celotáborová aktivita (neruší program)</strong> – oddíl se aktivity účastní, ale zároveň může mít i vlastní program. Pokud vlastní program zadáš, zobrazí se v buňce obojí – tvůj záznam i malá reference na aktivitu.</li>
+      <li><i class="bi bi-dice-5-fill text-primary me-1"></i><strong>Táborová hra</strong> – pokud ruší program, je buňka zablokována. Pokud neruší, platí stejné pravidlo jako u aktivit výše – lze mít vlastní program souběžně.</li>
+      <li><span class="badge bg-dark" style="font-size:.72rem"><i class="bi bi-moon-stars-fill me-1"></i>Noční · konec 22:30</span> – tento příznak se zobrazuje u programů a her, které končí po skončení večerního zaměstnání (nebo přesahují přes půlnoc). Čas udává skutečný konec aktivity.</li>
+      <li><i class="bi bi-robot me-1" style="color:#9c27b0"></i><strong>Služba</strong> – fialovou ikonkou je označen blok, kdy je oddíl na službě</li>
+      <li><span class="text-muted">—</span> – v tomto bloku ještě není zadán program</li>
+    </ul>
+    <p>Vespod stránky je <strong>Seznam potřeb</strong> – seznam všech pomůcek a materiálů, které sis k programu připsal.</p>
+    <div class="alert alert-info py-2 small mb-0">
+      <i class="bi bi-pencil me-1"></i>
+      <strong>Editace přímo z tohoto přehledu:</strong> Klikni na tlačítko <strong>✏️ Upravit</strong> (nad nebo pod tabulkou). V editačním režimu se u každého bloku zobrazí tlačítka <strong>upravit</strong> a <strong>smazat</strong>, u prázdných bloků tlačítko <strong>+ Přidat</strong>.
+    </div>
+  </div>
+</div>
+
+{# 3 #}
+<div id="zadani" class="card shadow-sm mb-3">
+  <div class="card-header bg-dark text-white fw-semibold">
+    <i class="bi bi-plus-circle me-2"></i>3. Zadání nebo úprava programu
+  </div>
+  <div class="card-body">
+    <p>V editačním režimu klikni na <strong>+ Přidat</strong> u prázdného bloku, nebo <strong>upravit</strong> u existujícího záznamu. Na stránce editace vyplníš:</p>
+    <ul>
+      <li><strong>Název programu</strong> – např. „Výprava do lesa", max. 200 znaků</li>
+      <li><strong>Začátek a konec</strong> – přesný čas aktivity (výchozí hodnoty odpovídají slotu)</li>
+      <li><strong>Sloučit se sousedními sloty</strong> – zaškrtni, pokud aktivita trvá více bloků za sebou (např. dopolední + 1. odpolední). Po zaškrtnutí prvního sousedního slotu se nabídne možnost přidat i další.</li>
+      <li>
+        <strong>Sdílet program s dalšími oddíly</strong> – pokud stejnou aktivitu dělá více oddílů dohromady, zaškrtni příslušné oddíly. Jejich program se automaticky zkopíruje.
+        <div class="alert alert-warning py-1 px-2 small mt-1 mb-0">
+          <i class="bi bi-info-circle me-1"></i>Pokud zaškrtneš <em>všechny</em> oddíly, program se automaticky převede na celotáborovou aktivitu.
+        </div>
+      </li>
+      <li>
+        <strong>Tee-pee</strong> – zaškrtnutím pole <em>Rezervovat tee-pee</em> si pro daný blok rezervuješ tee-pee.
+        Pokud je tee-pee v daný čas již obsazeno jiným oddílem, pole je zašedlé a zobrazí se informace o tom, kdo a pro jakou aktivitu ho má rezervované.
+        Podrobnosti viz sekce 11.
+      </li>
+      <li><strong>Pomůcky, materiál</strong> – viz sekce 5</li>
+    </ul>
+    <p class="mb-0">Uložíš kliknutím na <strong>✓ Uložit</strong>, zrušíš kliknutím na <strong>Zrušit</strong> (vrátí tě zpět do přehledu).</p>
+  </div>
+</div>
+
+{# 4 #}
+<div id="smazani" class="card shadow-sm mb-3">
+  <div class="card-header bg-dark text-white fw-semibold">
+    <i class="bi bi-trash me-2"></i>4. Smazání programu
+  </div>
+  <div class="card-body">
+    <p class="mb-0">V editačním režimu klikni na ikonu <i class="bi bi-trash text-danger"></i> u záznamu, který chceš smazat. Aplikace požádá o potvrzení.</p>
+  </div>
+</div>
+
+{# 5 #}
+<div id="pomucky" class="card shadow-sm mb-3">
+  <div class="card-header bg-dark text-white fw-semibold">
+    <i class="bi bi-tools me-2"></i>5. Pomůcky a materiál
+  </div>
+  <div class="card-body">
+    <p>Při editaci programového bloku je na konci stránky sekce <strong>Pomůcky, materiál</strong>. Zde můžeš zapsat vše, co budeš pro danou aktivitu potřebovat.</p>
+    <p><strong>Přidání pomůcky:</strong> zapiš název do pole a klikni na <strong>+ Přidat</strong>. Každou pomůcku lze následně <strong>Upravit</strong> nebo <strong>Smazat</strong> přímo v seznamu.</p>
+    <p class="mb-0">
+      <strong>Sledování připravenosti:</strong> Na stránce celého programu oddílu (sekce <em>Seznam potřeb</em> vespod) je u každé pomůcky zaškrtávací pole.
+      Kliknutím ho označíš jako připravené <span class="badge bg-success" style="font-size:.75rem">✓ zelené</span> – typicky až na táboře nebo při balení.
+      Opětovným kliknutím označení zrušíš.
+    </p>
+  </div>
+</div>
+
+{# 6 #}
+<div id="denni" class="card shadow-sm mb-3">
+  <div class="card-header bg-dark text-white fw-semibold">
+    <i class="bi bi-calendar-day me-2"></i>6. Denní program
+  </div>
+  <div class="card-body">
+    <p>Kliknutím na konkrétní den v kalendáři na úvodní stránce zobrazíš detail dne. Uvidíš:</p>
+    <ul>
+      <li>Jídelníček pro daný den</li>
+      <li>Službu a rádce dne – kdo je na službě a kdo je rádce</li>
+      <li>Táborovou hru / celotáborovou aktivitu – zadává hlavní vedoucí, vedoucí oddílu jen čte</li>
+      <li>Program každého oddílu pro každý časový blok</li>
+    </ul>
+    <p class="mb-0">Přepínač <strong>Zobrazení / Editace</strong> zpřístupní editaci přímo z denního přehledu – alternativa k editaci z přehledu oddílu.</p>
+  </div>
+</div>
+
+{# 7 #}
+<div id="jidelnicek" class="card shadow-sm mb-3">
+  <div class="card-header bg-dark text-white fw-semibold">
+    <i class="bi bi-egg-fried me-2" style="color:#f57f17"></i>7. Jídelníček
+  </div>
+  <div class="card-body">
+    <p class="mb-0">Přehled jídelníčku pro celý tábor zobrazíš kliknutím na <strong>Jídelníček</strong> na úvodní stránce. Kliknutím na <strong>✏️ Upravit</strong> lze jídelníček editovat přímo z přehledu – tlačítko <strong>upravit</strong> u každého dne otevře formulář se snídaní, dopolední svačinou, obědem, odpolední svačinou a večeří.</p>
+  </div>
+</div>
+
+{# 8 #}
+<div id="sluzby" class="card shadow-sm mb-3">
+  <div class="card-header bg-dark text-white fw-semibold">
+    <i class="bi bi-robot me-2" style="color:#ce93d8"></i>8. Přehled služeb
+  </div>
+  <div class="card-body">
+    <p class="mb-0"><strong>Služby</strong> na úvodní stránce zobrazí tabulku, kde je pro každý den vidět, který oddíl nebo oddíly jsou na službě a kdo je rádce dne. V editačním režimu lze zadání ke každému dni přímo upravovat – jeden blok může pokrývat i více oddílů zároveň.</p>
+  </div>
+</div>
+
+{# 9 #}
+<div id="hry" class="card shadow-sm mb-3">
+  <div class="card-header bg-dark text-white fw-semibold">
+    <i class="bi bi-dice-5-fill text-primary me-2"></i>9. Táborová hra a celotáborové aktivity
+  </div>
+  <div class="card-body">
+    <p>Tyto přehledy jsou určeny primárně pro čtení – celotáborový program zadává hlavní vedoucí. Vedoucí oddílu zde vidí harmonogram her a aktivit, jejich fyzickou náročnost, případně příznak <span class="badge bg-dark" style="font-size:.75rem"><i class="bi bi-moon-stars-fill me-1"></i>Noční</span> nebo <span class="badge bg-danger" style="font-size:.75rem"><i class="bi bi-x-circle me-1"></i>Ruší program</span>.</p>
+    <p><strong>Souběžný program</strong> – pokud hra nebo aktivita <em>neruší</em> program oddílů, může váš oddíl mít v daném slotu zároveň vlastní program. V přehledu oddílu pak buňka zobrazuje obojí: váš vlastní záznam jako hlavní obsah a pod ním malou referenci na hru nebo aktivitu.</p>
+    <p><strong>Výjimka z rušení programu</strong> <span class="badge bg-danger" style="font-size:.75rem">Ruší program</span><strong> zapnuto:</strong> Pokud je váš oddíl nastaven jako výjimka z dané hry nebo aktivity, zobrazí se daný blok ve vašem programu jako prázdný a vy si do něj můžete zadat vlastní program. Ostatní oddíly mají slot zablokován hrou.</p>
+    <p class="mb-0"><strong>Opt-out</strong> <span class="badge bg-secondary" style="font-size:.75rem">Ruší program vypnuto</span><strong>:</strong> I u her a aktivit, které program oddílů neruší, může být váš oddíl nastaven jako opt-out. V takovém případě se hra nebo aktivita ve vašem přehledu vůbec nezobrazí a daný blok je pro vás volný pro zadání vlastního programu. Ostatní oddíly hru nebo aktivitu ve svém přehledu vidí.</p>
+  </div>
+</div>
+
+{# 10 #}
+<div id="vyzvy" class="card shadow-sm mb-3">
+  <div class="card-header bg-dark text-white fw-semibold">
+    <i class="bi bi-trophy-fill me-2" style="color:#D4845A"></i>10. Výzvy
+  </div>
+  <div class="card-body">
+    <p>Přehled výzev zobrazíš kliknutím na dlaždici <strong>Výzvy</strong> na úvodní stránce. Tabulka ukazuje všechny zadané výzvy seřazené dle dnů – pro každou výzvu vidíš oblast, typ a časový rozsah.</p>
+    <p>Výzvy jsou terénní aktivity probíhající mimo tábor v určité oblasti (severně, západně nebo jižně od tábora). Každá výzva má:</p>
+    <ul>
+      <li><strong>Oblast</strong> – směr od tábora (↑ sever, ← západ, ↓ jih)</li>
+      <li><strong>Typ</strong> – Orlí pera, Kapky rosy nebo Bílé tesáky</li>
+      <li><strong>Čas</strong> – kdy výzva probíhá (může přesahovat přes půlnoc)</li>
+    </ul>
+    <p>U každé výzvy je uvedena oblast ve tvaru <em>↑ (severně od tábora)</em>, <em>← (západně od tábora)</em> nebo <em>↓ (jižně od tábora)</em>.</p>
+    <p>Výzvy probíhají <strong>na pozadí ostatního programu</strong> – nijak ho neruší a neblokují. Slouží pouze jako upozornění pro vedoucí, aby v danou dobu neposílali svůj oddíl do oblasti, kde výzva probíhá. Do ostatních slotů nebo jiných oblastí lze program zadávat zcela normálně.</p>
+    <p>Výzvy se zobrazují jako barevné štítky v denním programu, v přehledech oddílů a v Celkovém přehledu jako samostatný řádek mezi Jídelníčkem a Táborovou hrou.</p>
+    <div class="alert alert-info py-2 small mb-0">
+      <i class="bi bi-pencil me-1"></i>
+      <strong>Editace:</strong> Klikni na <strong>✏️ Upravit</strong>. U každého dne se zobrazí tlačítko <strong>+ přidat</strong>, které otevře formulář pro zadání nové výzvy. Existující výzvy lze smazat ikonou <i class="bi bi-trash text-danger"></i>. Výzvy se zadávají a mažou pouze z tohoto přehledu nebo z detailu dne – přímo v buňce tabulky není editace dostupná.
+    </div>
+  </div>
+</div>
+
+{# 11 #}
+<div id="teepee" class="card shadow-sm mb-3">
+  <div class="card-header bg-dark text-white fw-semibold">
+    <i class="bi bi-wifi me-2" style="transform:rotate(180deg);display:inline-block"></i>11. Tee-pee
+  </div>
+  <div class="card-body">
+    <p>Na táboře je k dispozici jedno tee-pee, které si oddíly mohou rezervovat pro svůj program. Rezervaci provádíš přímo při zadávání nebo úpravě programového bloku (viz sekce 3).</p>
+    <ul>
+      <li><strong>Volné tee-pee</strong> – zobrazí se zaškrtávací pole <em>Rezervovat tee-pee</em>. Zaškrtni ho a ulož program.</li>
+      <li><strong>Obsazené tee-pee</strong> – pokud má v daný čas tee-pee rezervováno jiný oddíl, pole je zašedlé a nelze ho zaškrtnout. Zobrazí se informace o obsazení: název oddílu, název aktivity a čas.</li>
+      <li><strong>Vlastní rezervace</strong> – pokud má tvůj oddíl tee-pee již rezervované, pole je zaškrtnuto a zobrazí se zelená hláška. Rezervaci lze odebrat odškrtnutím a uložením.</li>
+    </ul>
+    <p>
+      V přehledu celého programu oddílu a v celkovém přehledu se u aktivit s tee-pee rezervací zobrazuje ikona
+      <i class="bi bi-wifi" style="transform:rotate(180deg);display:inline-block;color:#6B5B3E"></i>
+      hned za názvem aktivity.
+    </p>
+    <p class="mb-0">
+      <strong>Přehled Tee-pee</strong> – kliknutím na dlaždici <i class="bi bi-wifi" style="transform:rotate(180deg);display:inline-block;color:#6B5B3E"></i> <strong>Tee-pee</strong> na úvodní stránce zobrazíš přehled všech rezervací tee-pee v průběhu celého tábora (den, čas, oddíl, název aktivity). Přehled je pouze pro čtení.
+    </p>
+  </div>
+</div>
+
+{# 12 #}
+<div id="prehled" class="card shadow-sm mb-3">
+  <div class="card-header bg-dark text-white fw-semibold">
+    <i class="bi bi-journal-text me-2"></i>12. Celkový přehled
+  </div>
+  <div class="card-body">
+    <p>Celkový přehled zobrazuje v jedné rozsáhlé tabulce pro každý den (v tomto pořadí):</p>
+    <ol>
+      <li>Službu a rádce dne</li>
+      <li>Jídelníček</li>
+      <li>Výzvy (s oblastí a typem)</li>
+      <li>Táborovou hru</li>
+      <li>Celotáborové aktivity</li>
+      <li>Program každého oddílu / družiny</li>
+    </ol>
+    <p class="mb-0">Slouží ke kontrole celkového obrazu tábora. Tento přehled je pouze pro čtení.</p>
+  </div>
+</div>
+
+{# 13 #}
+<div id="historie" class="card shadow-sm mb-4">
+  <div class="card-header bg-dark text-white fw-semibold">
+    <i class="bi bi-clock-history me-2"></i>13. Historie změn
+  </div>
+  <div class="card-body">
+    <p>Aplikace automaticky zaznamenává všechny úpravy programu. Na úvodní stránce vidíš posledních 10 změn v sekci <strong>Poslední změny</strong>. Každý záznam obsahuje:</p>
+    <ul>
+      <li><strong>Čas</strong> – kdy byla změna provedena (dnes/včera nebo datum)</li>
+      <li><strong>Popis</strong> – co bylo přidáno, upraveno nebo smazáno a pro který oddíl</li>
+      <li><strong>Odkaz →</strong> – přejde přímo na dotčený přehled</li>
+    </ul>
+    <p class="mb-0">Kliknutím na <strong><i class="bi bi-clock-history me-1"></i>Zobrazit historii →</strong> zobrazíš celý přehled změn stránkovaný po 20 položkách, od nejnovějších po nejstarší. Záznamy jsou jen pro čtení a nemohou být mazány.</p>
+  </div>
+</div>
+
+<p class="text-muted small">Máš-li jakékoli dotazy nebo narazíš-li na problém, kontaktuj správce aplikace.</p>
+
+</div>{# /col #}
+</div>{# /row #}
+
+{% endblock %}

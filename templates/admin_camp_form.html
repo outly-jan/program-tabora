@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Upravit' if camp else 'Nový' }} tábor{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center gap-2 mb-3">
+  <a href="{{ url_for('admin') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+  <h5 class="mb-0">{{ 'Upravit tábor' if camp else 'Nový tábor' }}</h5>
+</div>
+
+<form method="post" class="card shadow-sm" style="max-width:480px">
+  <div class="card-body">
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Název tábora</label>
+      <input type="text" name="name" class="form-control" required
+             value="{{ camp.name if camp else '' }}" placeholder="např. Letní tábor 2026">
+    </div>
+    <div class="row g-2 mb-3">
+      <div class="col-6">
+        <label class="form-label fw-semibold">Datum od</label>
+        <input type="date" name="date_from" class="form-control" required
+               value="{{ camp.date_from.isoformat() if camp else '' }}">
+      </div>
+      <div class="col-6">
+        <label class="form-label fw-semibold">Datum do</label>
+        <input type="date" name="date_to" class="form-control" required
+               value="{{ camp.date_to.isoformat() if camp else '' }}">
+      </div>
+    </div>
+    {% if not camp %}
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Převzít nastavení z existujícího tábora</label>
+        <select name="copy_from_camp_id" class="form-select">
+          <option value="">— použít výchozí nastavení —</option>
+          {% for c in existing_camps %}
+            <option value="{{ c.id }}">
+              {{ c.name }} ({{ c.date_from.strftime('%-d. %-m. %Y') }}–{{ c.date_to.strftime('%-d. %-m. %Y') }})
+            </option>
+          {% endfor %}
+        </select>
+        <div class="form-text">Zkopírují se oddíly / družiny, časové sloty a sloty služby.</div>
+      </div>
+    {% endif %}
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Uložit</button>
+      <a href="{{ url_for('admin') }}" class="btn btn-outline-secondary">Zrušit</a>
+    </div>
+  </div>
+</form>
+{% endblock %}

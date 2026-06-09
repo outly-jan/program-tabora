@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Upravit' if slot else 'Nový' }} slot{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center gap-2 mb-3">
+  <a href="{{ url_for('admin_slots', camp_id=camp.id) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+  <h5 class="mb-0">{{ 'Upravit slot' if slot else 'Nový slot' }} — {{ camp.name }}</h5>
+</div>
+
+<form method="post" class="card shadow-sm" style="max-width:480px">
+  <div class="card-body">
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Název slotu</label>
+      <input type="text" name="name" class="form-control" required
+             value="{{ slot.name if slot else '' }}"
+             placeholder="např. Dopolední zaměstnání">
+    </div>
+    <div class="row g-2 mb-3">
+      <div class="col-6">
+        <label class="form-label fw-semibold">Začátek</label>
+        <input type="time" name="time_from" class="form-control" step="300" required
+               value="{{ slot.time_from if slot else '09:00' }}">
+      </div>
+      <div class="col-6">
+        <label class="form-label fw-semibold">Konec</label>
+        <input type="time" name="time_to" class="form-control" step="300" required
+               value="{{ slot.time_to if slot else '12:00' }}">
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Pořadí</label>
+      <input type="number" name="order" class="form-control" min="1" required
+             value="{{ slot.order if slot else 1 }}"
+             style="max-width:100px">
+      <div class="form-text">Nižší číslo = dříve v programu.</div>
+    </div>
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Uložit</button>
+      <a href="{{ url_for('admin_slots', camp_id=camp.id) }}" class="btn btn-outline-secondary">Zrušit</a>
+    </div>
+  </div>
+</form>
+{% endblock %}

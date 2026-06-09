@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Jídelníček – {{ day.strftime('%-d. %-m.') }}{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center gap-2 mb-3">
+  <a href="{{ url_for('program_day', camp_id=camp.id, date_str=day.isoformat()) }}"
+     class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+  <h5 class="mb-0">Jídelníček — {{ day.strftime('%-d. %-m. %Y') }}</h5>
+</div>
+
+<form method="post" class="card shadow-sm">
+  <div class="card-body">
+    <input type="hidden" name="camp_id" value="{{ camp.id }}">
+    <input type="hidden" name="date"    value="{{ day.isoformat() }}">
+    <input type="hidden" name="next"    value="{{ next_url or '' }}">
+
+    {% set icons = {'snidane':'🍳','dop_svacina':'🥪','obed':'🍜','odp_svacina':'🍎','vecere':'🍽️'} %}
+    {% set placeholders = {'snidane':'Co bude k snídani?','dop_svacina':'Co bude k dop. svačině?','obed':'Co bude k obědu?','odp_svacina':'Co bude k odp. svačině?','vecere':'Co bude k večeři?'} %}
+    {% for mt in MEAL_TYPES %}
+      {% set meal = meal_map.get(mt) %}
+      <div class="mb-3">
+        <label class="form-label fw-semibold">{{ icons[mt] }} {{ MEAL_LABELS[mt] }}</label>
+        <input type="text" name="meal_{{ mt }}" class="form-control"
+               value="{{ meal.description if meal else '' }}"
+               placeholder="{{ placeholders[mt] }}">
+      </div>
+    {% endfor %}
+
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Uložit</button>
+      <a href="{{ next_url or url_for('program_day', camp_id=camp.id, date_str=day.isoformat()) }}"
+         class="btn btn-outline-secondary">Zrušit</a>
+    </div>
+  </div>
+</form>
+{% endblock %}

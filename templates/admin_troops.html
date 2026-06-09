@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Oddíly / Družiny – {{ camp.name }}{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center gap-2 mb-3">
+  <a href="{{ url_for('admin') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+  <h5 class="mb-0">Oddíly / Družiny — {{ camp.name }}</h5>
+</div>
+
+<a href="{{ url_for('admin_new_troop', camp_id=camp.id) }}" class="btn btn-success mb-3">
+  <i class="bi bi-plus-lg"></i> Přidat oddíl / družinu
+</a>
+
+{% if not camp.troops %}
+  <div class="alert alert-info">Zatím žádné oddíly / družiny.</div>
+{% endif %}
+
+<div class="list-group shadow-sm">
+  {% for troop in camp.troops %}
+  <div class="list-group-item d-flex align-items-center gap-3">
+    <span class="badge bg-light text-dark border me-1" style="min-width:2rem">{{ troop.order }}</span>
+    <span style="width:24px;height:24px;border-radius:6px;background:{{ troop.color }};flex-shrink:0;display:inline-block"></span>
+    <span class="fw-semibold flex-grow-1">{{ troop.name }}</span>
+    <span class="text-muted small me-2">{{ troop.color }}</span>
+    <a href="{{ url_for('admin_edit_troop', troop_id=troop.id) }}"
+       class="btn btn-sm btn-outline-primary py-0 px-2"><i class="bi bi-pencil"></i></a>
+    <form method="post" action="{{ url_for('admin_delete_troop', troop_id=troop.id) }}" class="d-inline">
+      <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2"
+              onclick="return confirm('Smazat oddíl / družinu „{{ troop.name }}"?')">
+        <i class="bi bi-trash"></i>
+      </button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

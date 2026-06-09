@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}{{ GAME_TYPE_LABELS[entry_type] }} – {{ slot.name }}{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center gap-2 mb-3">
+  <a href="{{ url_for('program_day', camp_id=camp.id, date_str=day.isoformat()) }}"
+     class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+  <h5 class="mb-0">
+    {{ GAME_TYPE_LABELS[entry_type] }} — {{ slot.name }}
+    <span class="text-muted fw-normal small">{{ day.strftime('%-d. %-m. %Y') }}</span>
+  </h5>
+</div>
+
+<form method="post" class="card shadow-sm">
+  <div class="card-body">
+    <input type="hidden" name="camp_id"    value="{{ camp.id }}">
+    <input type="hidden" name="date"       value="{{ day.isoformat() }}">
+    <input type="hidden" name="slot_id"    value="{{ slot.id }}">
+    <input type="hidden" name="entry_type" value="{{ entry_type }}">
+    <input type="hidden" name="next"       value="{{ next_url or '' }}">
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Název / popis</label>
+      <input type="text" name="title" maxlength="200" class="form-control"
+             value="{{ existing.title if existing else '' }}"
+             placeholder="Max. 200 znaků">
+    </div>
+
+    <div class="row g-2 mb-3">
+      <div class="col-6">
+        <label class="form-label">Začátek</label>
+        <input type="time" name="time_from" class="form-control" step="300"
+               value="{{ existing.time_from if existing else slot.time_from }}">
+      </div>
+      <div class="col-6">
+        <label class="form-label">Konec</label>
+        <input type="time" name="time_to" class="form-control" step="300"
+               value="{{ existing.time_to if existing else slot.time_to }}">
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Fyzická náročnost <span class="text-danger">*</span></label>
+      <div class="d-flex gap-3 flex-wrap">
+        {% for key, label in INTENSITY_LABELS.items() %}
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="physical_intensity"
+                   value="{{ key }}" id="int_{{ key }}"
+                   {% if existing and existing.physical_intensity == key %}checked{% endif %}
+                   required>
+            <label class="form-check-label" for="int_{{ key }}">{{ label }}</label>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" name="cancels_troop_program"
+               id="cancels"
+               {% if existing and existing.cancels_troop_program %}checked{% endif %}>
+        <label class="form-check-label" for="cancels">
+          <strong>Ruší program oddílů / družin</strong>
+          <span class="text-muted small d-block">Táborová hra / aktivita přebíjí program oddílů / družin v tomto slotu.</span>
+        </label>
+      </div>
+      {% if troops %}
+        <div class="mt-2 ms-4 p-2 border rounded bg-light">
+          <div class="small text-muted mb-1">
+            <i class="bi bi-person-x me-1"></i>
+            <strong id="exc_label"></strong>
+          </div>
+          {% for t in troops %}
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox"
+                     name="except_troop_ids" value="{{ t.id }}"
+                     id="exc_{{ t.id }}"
+                     {% if existing and t.id in existing.get_except_troop_ids() %}checked{% endif %}>
+              <label class="form-check-label d-flex align-items-center gap-2" for="exc_{{ t.id }}">
+                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:{{ t.color }};flex-shrink:0"></span>
+                {{ t.name }}
+              </label>
+            </div>
+          {% endfor %}
+        </div>
+        <script>
+        (function(){
+          const chk = document.getElementById('cancels');
+          const lbl = document.getElementById('exc_label');
+          function upd(){
+            lbl.textContent = chk.checked
+              ? 'Výjimky – oddíly / družiny, které se nezúčastní a mají vlastní program:'
+              : 'Opt-out – oddíly / družiny, pro které se hra / aktivita v jejich přehledu nezobrazí:';
+          }
+          chk.addEventListener('change', upd);
+          upd();
+        })();
+        </script>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Sloučit se sousedními sloty</label>
+      <div class="small text-muted mb-2">Po zaškrtnutí se zobrazí možnost přidat další sousední slot.</div>
+      {% if all_slots|length > 1 %}
+        {% for s in all_slots %}
+          {% if s.id != slot.id %}
+            <div class="form-check merge-item" id="mwrap_{{ s.id }}">
+              <input class="form-check-input merge-cb" type="checkbox" name="merge_slots"
+                     value="{{ s.id }}" id="mg_{{ s.id }}"
+                     {% if existing and s.id in existing.get_slot_ids() %}checked{% endif %}>
+              <label class="form-check-label" for="mg_{{ s.id }}">
+                {{ s.name }} <span class="text-muted">({{ s.time_from }}–{{ s.time_to }})</span>
+              </label>
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <div class="text-muted small">Žádné sousední sloty nejsou k dispozici.</div>
+      {% endif %}
+    </div>
+    <script>
+    (function(){
+      const primaryId  = {{ slot.id }};
+      const order      = {{ all_slots | map(attribute='id') | list | tojson }};
+      const primaryIdx = order.indexOf(primaryId);
+
+      function refresh() {
+        const sel = new Set([primaryId]);
+        document.querySelectorAll('.merge-cb:checked').forEach(cb => sel.add(+cb.value));
+        const selIdx = order.map((id,i) => sel.has(id) ? i : -1).filter(i => i >= 0);
+        const lo = Math.min(...selIdx), hi = Math.max(...selIdx);
+
+        order.forEach((id, i) => {
+          if (id === primaryId) return;
+          const wrap = document.getElementById('mwrap_' + id);
+          const cb   = document.getElementById('mg_'    + id);
+          if (!wrap || !cb) return;
+          wrap.style.display = (sel.has(id) || i === lo-1 || i === hi+1) ? '' : 'none';
+          const isMid = cb.checked && !(i === lo || i === hi) && i !== primaryIdx;
+          cb.disabled = isMid;
+          // Disabled checkboxes don't submit – mirror via hidden input
+          let hid = document.getElementById('hid_mg_' + id);
+          if (isMid && !hid) {
+            hid = document.createElement('input');
+            hid.type = 'hidden'; hid.name = 'merge_slots'; hid.value = id;
+            hid.id = 'hid_mg_' + id;
+            wrap.appendChild(hid);
+          } else if (!isMid && hid) { hid.remove(); }
+        });
+      }
+
+      document.querySelectorAll('.merge-cb').forEach(cb => cb.addEventListener('change', refresh));
+      refresh();
+    })();
+    </script>
+
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Uložit</button>
+      <a href="{{ next_url or url_for('program_day', camp_id=camp.id, date_str=day.isoformat()) }}"
+         class="btn btn-outline-secondary">Zrušit</a>
+    </div>
+  </div>
+</form>
+{% endblock %}

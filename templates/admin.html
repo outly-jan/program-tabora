@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Admin – Program tábora{% endblock %}
+{% block content %}
+
+<h4><i class="bi bi-gear-fill me-2"></i>Admin rozhraní</h4>
+
+<div class="d-flex gap-2 mb-3 flex-wrap">
+  <a href="{{ url_for('admin_new_camp') }}" class="btn btn-success">
+    <i class="bi bi-plus-lg"></i> Nový tábor
+  </a>
+  <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i> Zpět na program
+  </a>
+</div>
+
+<div class="card mb-4 border-secondary shadow-sm" style="max-width:480px">
+  <div class="card-header fw-semibold"><i class="bi bi-archive me-1"></i> Záloha databáze</div>
+  <div class="card-body">
+    <p class="text-muted small mb-3">Záloha obsahuje všechna data aplikace (tábory, program, jídelníček, služby).</p>
+    <div class="d-flex flex-wrap gap-3 align-items-start">
+      <div>
+        <a href="{{ url_for('admin_backup') }}" class="btn btn-outline-primary">
+          <i class="bi bi-download me-1"></i> Stáhnout zálohu
+        </a>
+      </div>
+      <form method="post" action="{{ url_for('admin_restore') }}" enctype="multipart/form-data"
+            onsubmit="return confirm('Opravdu obnovit zálohu? Stávající data budou přepsána.')">
+        <div class="input-group">
+          <input type="file" name="backup_file" class="form-control form-control-sm"
+                 accept=".db" required>
+          <button type="submit" class="btn btn-sm btn-outline-danger">
+            <i class="bi bi-upload me-1"></i> Obnovit
+          </button>
+        </div>
+        <div class="form-text">Nahraj soubor .db ze zálohy</div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% if not camps %}
+  <div class="alert alert-info">Zatím žádný tábor.</div>
+{% endif %}
+
+{% for camp in camps %}
+<div class="card mb-3 shadow-sm">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <strong>{{ camp.name }}</strong>
+    <span class="text-muted small">
+      {{ camp.date_from.strftime('%-d. %-m. %Y') }} – {{ camp.date_to.strftime('%-d. %-m. %Y') }}
+    </span>
+  </div>
+  <div class="card-body">
+    <div class="d-flex flex-wrap gap-2">
+      <a href="{{ url_for('admin_edit_camp', camp_id=camp.id) }}"
+         class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Upravit tábor</a>
+      <a href="{{ url_for('admin_troops', camp_id=camp.id) }}"
+         class="btn btn-sm btn-outline-secondary"><i class="bi bi-people"></i> Oddíly / Družiny ({{ camp.troops|length }})</a>
+      <a href="{{ url_for('admin_slots', camp_id=camp.id) }}"
+         class="btn btn-sm btn-outline-secondary"><i class="bi bi-clock"></i> Časové sloty</a>
+      <form method="post" action="{{ url_for('admin_delete_camp', camp_id=camp.id) }}" class="d-inline">
+        <button type="submit" class="btn btn-sm btn-outline-danger"
+                onclick="return confirm('Opravdu smazat tábor „{{ camp.name }}" i se všemi daty?')">
+          <i class="bi bi-trash"></i> Smazat
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Výzvy – {{ camp.name }}{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+  <a href="{{ url_for('index') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h5 class="mb-0"><i class="bi bi-trophy-fill me-1" style="color:#E65100"></i>Výzvy — {{ camp.name }}</h5>
+</div>
+
+{% set back_url = url_for('challenges_overview', camp_id=camp.id, edit='1') %}
+
+{% if edit_mode %}
+  <a href="{{ url_for('challenges_overview', camp_id=camp.id) }}"
+     class="btn btn-sm btn-outline-secondary mb-2"><i class="bi bi-eye me-1"></i>Zobrazení</a>
+{% else %}
+  <a href="{{ back_url }}" class="btn btn-sm btn-outline-secondary mb-2" style="border-color:#E65100;color:#E65100">
+    <i class="bi bi-pencil me-1"></i>Upravit
+  </a>
+{% endif %}
+
+{% set day_names = ['Po','Út','St','Čt','Pá','So','Ne'] %}
+
+{% if days_data %}
+  <div class="table-responsive">
+    <table class="table table-bordered table-sm align-middle" style="min-width:500px">
+      <thead class="table-dark">
+        <tr>
+          <th style="min-width:80px">Den</th>
+          <th>Oblast</th>
+          <th>Typ výzvy</th>
+          <th>Čas</th>
+          {% if edit_mode %}<th></th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for dd in days_data %}
+          {% if dd.entries %}
+            {% for entry in dd.entries %}
+              <tr>
+                {% if loop.first %}
+                  <td class="text-nowrap fw-semibold" rowspan="{{ dd.entries|length }}">
+                    {{ day_names[dd.day.weekday()] }}<br>
+                    <span class="fw-normal">{{ dd.day.strftime('%-d. %-m.') }}</span>
+                    {% if edit_mode %}
+                      <div class="mt-1">
+                        <a href="{{ url_for('edit_challenges', camp_id=camp.id, date=dd.day.isoformat(), next=back_url) }}"
+                           class="btn btn-sm py-0 px-2" style="font-size:.72rem;border:1px solid #E65100;color:#E65100">
+                          <i class="bi bi-plus"></i> přidat
+                        </a>
+                      </div>
+                    {% endif %}
+                  </td>
+                {% endif %}
+                <td>
+                  <span class="badge" style="background:#E65100;font-size:.75rem">
+                    {{ AREA_ICONS[entry.area] }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge" style="background:{{ CHALLENGE_COLORS[entry.challenge] }};font-size:.75rem">
+                    <i class="bi bi-trophy-fill me-1"></i>{{ CHALLENGE_NAMES[entry.challenge] }}
+                  </span>
+                </td>
+                <td class="text-nowrap" style="font-size:.85rem">{{ entry.time_from }}–{{ entry.time_to }}</td>
+                {% if edit_mode %}
+                  <td>
+                    <a href="{{ url_for('delete_challenge', entry_id=entry.id, next=back_url) }}"
+                       class="btn btn-sm btn-outline-danger py-0 px-2"
+                       onclick="return confirm('Smazat výzvu?')">
+                      <i class="bi bi-trash"></i>
+                    </a>
+                  </td>
+                {% endif %}
+              </tr>
+            {% endfor %}
+          {% elif edit_mode %}
+            <tr>
+              <td class="text-nowrap fw-semibold">
+                {{ day_names[dd.day.weekday()] }}<br>
+                <span class="fw-normal">{{ dd.day.strftime('%-d. %-m.') }}</span>
+              </td>
+              <td colspan="{{ 3 + (1 if edit_mode else 0) }}" class="text-muted small">
+                —
+                <a href="{{ url_for('edit_challenges', camp_id=camp.id, date=dd.day.isoformat(), next=back_url) }}"
+                   class="btn btn-sm py-0 px-2 ms-2" style="font-size:.72rem;border:1px solid #E65100;color:#E65100">
+                  <i class="bi bi-plus"></i> přidat
+                </a>
+              </td>
+            </tr>
+          {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="alert alert-info">Zatím nejsou zadány žádné výzvy.</div>
+{% endif %}
+
+{% if edit_mode %}
+  <a href="{{ url_for('challenges_overview', camp_id=camp.id) }}"
+     class="btn btn-sm btn-outline-secondary mt-2"><i class="bi bi-eye me-1"></i>Zobrazení</a>
+{% else %}
+  <a href="{{ back_url }}" class="btn btn-sm btn-outline-secondary mt-2" style="border-color:#E65100;color:#E65100">
+    <i class="bi bi-pencil me-1"></i>Upravit
+  </a>
+{% endif %}
+
+{% endblock %}

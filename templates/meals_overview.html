@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Jídelníček – {{ camp.name }}{% endblock %}
+{% block content %}
+
+{% set MEAL_ICONS = {'snidane':'🍳','dop_svacina':'🥪','obed':'🍽️','odp_svacina':'🍎','vecere':'🥘'} %}
+
+<div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+  <a href="{{ url_for('index') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h5 class="mb-0">Jídelníček — {{ camp.name }}</h5>
+</div>
+{% set back_url = url_for('meals_overview', camp_id=camp.id, edit='1') %}
+
+{% if edit_mode %}
+  <a href="{{ url_for('meals_overview', camp_id=camp.id) }}"
+     class="btn btn-sm btn-outline-secondary mb-2"><i class="bi bi-eye me-1"></i>Zobrazení</a>
+{% else %}
+  <a href="{{ back_url }}" class="btn btn-sm btn-outline-warning text-dark mb-2">
+    <i class="bi bi-pencil me-1"></i>Upravit
+  </a>
+{% endif %}
+
+<div class="table-responsive">
+  <table class="table table-bordered table-sm align-middle" style="min-width:600px">
+    <thead class="table-dark">
+      <tr>
+        <th style="min-width:80px">Den</th>
+        {% for mt in MEAL_TYPES %}
+          <th>{{ MEAL_ICONS[mt] }} {{ MEAL_LABELS[mt] }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% set day_names = ['Po','Út','St','Čt','Pá','So','Ne'] %}
+      {% for dd in days_data %}
+        <tr>
+          <td class="text-nowrap fw-semibold">
+            {{ day_names[dd.day.weekday()] }}<br>
+            <span class="fw-normal">{{ dd.day.strftime('%-d. %-m.') }}</span>
+            {% if edit_mode %}
+              <div class="mt-1">
+                <a href="{{ url_for('edit_meals', camp_id=camp.id, date=dd.day.isoformat(), next=back_url) }}"
+                   class="btn btn-xs btn-sm btn-outline-warning text-dark py-0 px-2" style="font-size:.72rem">
+                  <i class="bi bi-pencil"></i> upravit
+                </a>
+              </div>
+            {% endif %}
+          </td>
+          {% for mt in MEAL_TYPES %}
+            {% set meal = dd.meal_map.get(mt) %}
+            <td style="font-size:.85rem">
+              {% if meal and meal.description %}
+                {{ meal.description }}
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if edit_mode %}
+  <a href="{{ url_for('meals_overview', camp_id=camp.id) }}"
+     class="btn btn-sm btn-outline-secondary mt-2"><i class="bi bi-eye me-1"></i>Zobrazení</a>
+{% else %}
+  <a href="{{ back_url }}" class="btn btn-sm btn-outline-warning text-dark mt-2">
+    <i class="bi bi-pencil me-1"></i>Upravit
+  </a>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+{% block title %}{{ day.strftime('%-d. %-m.') }} – {{ camp.name }}{% endblock %}
+{% block content %}
+
+{# Navigace #}
+<div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+  <a href="{{ url_for('index') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-grid"></i></a>
+  {% if prev_day %}
+    <a href="{{ url_for('program_day', camp_id=camp.id, date_str=prev_day.isoformat()) }}"
+       class="btn btn-sm btn-outline-secondary"><i class="bi bi-chevron-left"></i></a>
+  {% endif %}
+  <h5 class="mb-0">
+    {{ ['Pondělí','Úterý','Středa','Čtvrtek','Pátek','Sobota','Neděle'][day.weekday()] }}
+    {{ day.strftime('%-d. %-m. %Y') }}
+  </h5>
+  {% if next_day %}
+    <a href="{{ url_for('program_day', camp_id=camp.id, date_str=next_day.isoformat()) }}"
+       class="btn btn-sm btn-outline-secondary"><i class="bi bi-chevron-right"></i></a>
+  {% endif %}
+</div>
+
+{# Přepínač zobrazení / editace #}
+{% if edit_mode %}
+<div class="d-flex flex-wrap gap-2 mb-3">
+  <a href="{{ url_for('program_day', camp_id=camp.id, date_str=day.isoformat()) }}"
+     class="btn btn-outline-secondary">
+    <i class="bi bi-eye me-1"></i> Zobrazení
+  </a>
+  <a href="{{ url_for('edit_service', camp_id=camp.id, date=day.isoformat()) }}"
+     class="btn" style="border:1px solid #9c27b0;color:#9c27b0">
+    <i class="bi bi-robot me-1"></i> Vyplnit službu & rádce
+  </a>
+  <a href="{{ url_for('edit_meals', camp_id=camp.id, date=day.isoformat()) }}"
+     class="btn btn-outline-warning text-dark">
+    <i class="bi bi-fork-knife me-1"></i> Jídelníček
+  </a>
+  <a href="{{ url_for('edit_challenges', camp_id=camp.id, date=day.isoformat()) }}"
+     class="btn" style="border:1px solid #E65100;color:#E65100">
+    <i class="bi bi-trophy-fill me-1"></i> Výzvy
+  </a>
+</div>
+{% else %}
+<div class="mb-3">
+  <a href="{{ url_for('program_day', camp_id=camp.id, date_str=day.isoformat(), edit='1') }}"
+     class="btn btn-sm btn-primary">
+    <i class="bi bi-pencil me-1"></i> Upravit program
+  </a>
+</div>
+{% endif %}
+
+{# Služba + Rádce dne #}
+<div class="service-row mb-2">
+  <div class="d-flex flex-wrap gap-4 align-items-start">
+    {% if svc_templates %}
+      {% for st in svc_templates %}
+        {% set svc = svc_map.get(st.slot_number) %}
+        {% set adv = advisor_map.get(st.slot_number) %}
+        <div>
+          <div class="fw-bold" style="font-size:.85rem">
+            <i class="bi bi-robot me-1 text-success"></i>Služba {{ st.slot_number }}
+            <span class="fw-normal text-muted ms-1" style="font-size:.8rem">{{ st.time_from }}–{{ st.time_to }}</span>
+          </div>
+          <div style="font-size:.83rem">
+            {% set svcs = svc_map.get(st.slot_number, []) %}
+            {% if svcs %}
+              {% for svc in svcs %}
+                {% if svc.troop %}
+                  <span class="troop-badge me-1" style="background:{{ svc.troop.color }}"></span>{{ svc.troop.name }}{% if not loop.last %} + {% endif %}
+                {% endif %}
+              {% endfor %}
+            {% else %}
+              <span class="text-danger">— nevyplněno</span>
+            {% endif %}
+            <span class="text-muted ms-2"><i class="bi bi-person-star me-1"></i>{% if adv and adv.name %}rádce dne: {{ adv.name }}{% else %}— nevyplněno{% endif %}</span>
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+</div>
+
+{# Jídelníček – všechna jídla v jednom boxu #}
+<div class="meal-banner mb-3">
+  {% set meal_rows = [
+    ('snidane',     '🍳'),
+    ('dop_svacina', '🥪'),
+    ('obed',        '🍽️'),
+    ('odp_svacina', '🍎'),
+    ('vecere',      '🥘'),
+  ] %}
+  {% for mt, emoji in meal_rows %}
+    {% set meal = meal_map.get(mt) %}
+    <div {% if not loop.first %}class="mt-1"{% endif %}>
+      {{ emoji }} <strong>{{ MEAL_LABELS[mt] }}:</strong>
+      {% if meal and meal.description %}{{ meal.description }}
+      {% else %}<span class="text-muted">nevyplněno</span>{% endif %}
+    </div>
+  {% endfor %}
+</div>
+
+{# Sloty #}
+{% for slot in slots %}
+
+  {# Hlavička slotu #}
+  <div class="slot-header mt-2 d-flex flex-wrap align-items-center gap-2">
+    <span><i class="bi bi-clock me-1"></i>{{ slot.name }}
+    <span class="fw-normal ms-2 opacity-75">{{ slot.time_from }} – {{ slot.time_to }}</span></span>
+    {% for info in slot_service_info.get(slot.id, []) %}
+      {% if info.svcs %}
+        <span style="font-size:.78rem;font-weight:normal;background:#9c27b0;padding:2px 8px;border-radius:4px;white-space:nowrap;color:#fff">
+          <i class="bi bi-robot me-1"></i>{% for svc in info.svcs %}{% if svc.troop %}{{ svc.troop.name }}{% if not loop.last %} + {% endif %}{% endif %}{% endfor %}{% if info.adv and info.adv.name %}&nbsp;·&nbsp;<i class="bi bi-person-star me-1"></i>rádce dne: {{ info.adv.name }}{% endif %}
+        </span>
+      {% endif %}
+    {% endfor %}
+  </div>
+  <div class="slot-block">
+
+    {# Táborová hra / Celotáborová aktivita #}
+    {% if slot.id in game_slot_map %}
+      {% set game = game_slot_map[slot.id] %}
+      {% set gtype = game.entry_type or 'hra' %}
+      {% set gcol = GAME_TYPE_COLORS[gtype] %}
+      {% if game_primary.get(game.id) == slot.id %}
+        <div class="m-2 p-2 rounded" style="background:{{ gcol.bg }};border:1px solid {{ gcol.border }}">
+          <div class="d-flex align-items-start gap-2 flex-wrap">
+            <i class="bi {{ GAME_TYPE_ICONS[gtype] }} {{ gcol.text }} mt-1"></i>
+            <div class="flex-grow-1">
+              <strong>{{ GAME_TYPE_LABELS[gtype] }}:</strong>
+              {{ game.title or '— bez názvu' }}
+              {% if game.physical_intensity %}
+                <span class="intensity-badge intensity-{{ game.physical_intensity }} ms-1">
+                  <i class="bi {{ INTENSITY_ICONS[game.physical_intensity] }} me-1"></i>{{ INTENSITY_LABELS[game.physical_intensity] }}
+                </span>
+              {% endif %}
+              {% if game_is_night(game, last_slot_time_to) %}
+                <span class="badge bg-dark ms-1"><i class="bi bi-moon-stars-fill me-1"></i>Noční aktivita · konec {{ game.time_to }}</span>
+              {% endif %}
+              {% if game.cancels_troop_program %}
+                <span class="badge bg-danger ms-1"><i class="bi bi-x-circle"></i> Ruší program oddílů / družin</span>
+              {% endif %}
+              {% if game.get_slot_ids()|length > 1 %}
+                <span class="badge bg-secondary ms-1">sloučeno {{ game.get_slot_ids()|length }} slotů</span>
+              {% endif %}
+            </div>
+            {% if edit_mode %}
+            <div class="d-flex gap-1">
+              <a href="{{ url_for('edit_game_entry', camp_id=camp.id, date=day.isoformat(), slot_id=slot.id, entry_type=gtype) }}"
+                 class="btn btn-xs btn-outline-primary btn-sm py-0 px-2">upravit</a>
+              <a href="{{ url_for('delete_game_entry', entry_id=game.id) }}"
+                 class="btn btn-xs btn-outline-danger btn-sm py-0 px-2"
+                 onclick="return confirm('Smazat záznam?')">
+                <i class="bi bi-trash"></i>
+              </a>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      {% else %}
+        <div class="m-2 text-muted small fst-italic" style="background:{{ gcol.bg }};border:1px solid {{ gcol.border }};padding:.3rem .6rem;border-radius:4px">
+          <i class="bi {{ GAME_TYPE_ICONS[gtype] }} me-1"></i>{{ GAME_TYPE_LABELS[gtype] }} pokračuje z předchozího slotu
+        </div>
+      {% endif %}
+    {% elif edit_mode %}
+      <div class="m-2 d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('edit_game_entry', camp_id=camp.id, date=day.isoformat(), slot_id=slot.id, entry_type='hra') }}"
+           class="btn btn-sm btn-outline-primary py-0 px-2">
+          <i class="bi bi-plus"></i> Přidat táborovou hru
+        </a>
+        <a href="{{ url_for('edit_game_entry', camp_id=camp.id, date=day.isoformat(), slot_id=slot.id, entry_type='aktivita') }}"
+           class="btn btn-sm btn-outline-success py-0 px-2">
+          <i class="bi bi-plus"></i> Přidat celotáb. aktivitu
+        </a>
+      </div>
+    {% endif %}
+
+    {# Výzvy aktivní v tomto slotu #}
+    {% set slot_challenges = slot_challenge_map.get(slot.id, []) %}
+    {% if slot_challenges %}
+      <div class="mx-2 mb-1 d-flex flex-wrap gap-1">
+        {% for ch in slot_challenges %}
+          <span class="badge" style="background:{{ CHALLENGE_COLORS[ch.challenge] }};font-size:.75rem">
+            <i class="bi bi-trophy-fill me-1"></i>{{ CHALLENGE_NAMES[ch.challenge] }}
+            &nbsp;{{ AREA_ICONS[ch.area] }} {{ CHALLENGE_AREAS[ch.area] }}
+            <span class="opacity-75 ms-1">{{ ch.time_from }}–{{ ch.time_to }}</span>
+          </span>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {# Program oddílů / družin #}
+    {% for troop in troops %}
+      {% set entry = slot_troop_map.get(slot.id, {}).get(troop.id) %}
+      {% set cancelled = slot.id in cancelled_slots and troop.id not in cancel_exceptions_map.get(slot.id, []) %}
+
+      {% set has_service = troop.id in slot_service_troop_ids.get(slot.id, []) %}
+      <div class="troop-row {% if cancelled and entry %}cancelled-overlay{% endif %}">
+        <span class="troop-badge" style="background:{{ troop.color }}"></span>
+        <span style="min-width:6rem">{{ troop.name }}</span>
+        {% if has_service %}
+          <span class="badge me-1" style="background:#9c27b0;font-size:.7rem">
+            <i class="bi bi-robot"></i> Služba
+          </span>
+        {% endif %}
+
+        {% if entry %}
+          {% set is_primary = entry_primary.get(entry.id) == slot.id %}
+          {% if is_primary %}
+            <span class="flex-grow-1">
+              {{ entry.title or '— bez názvu' }}
+              {% if entry.teepee %}
+                <i class="bi bi-wifi ms-1" title="Tee-pee rezervováno"
+                   style="transform:rotate(180deg);display:inline-block;color:#6B5B3E;font-size:.8rem"></i>
+              {% endif %}
+              {% set ns_t = namespace(t_from='', t_to='') %}
+              {% for s in slots %}
+                {% if s.id in entry.get_slot_ids() %}
+                  {% if not ns_t.t_from %}{% set ns_t.t_from = s.time_from %}{% endif %}
+                  {% set ns_t.t_to = s.time_to %}
+                {% endif %}
+              {% endfor %}
+              <span class="text-muted small ms-1">{{ entry.time_from }}–{{ entry.time_to }}</span>
+              {% if entry.get_slot_ids()|length > 1 %}
+                <span class="badge bg-secondary ms-1" style="font-size:.65rem">
+                  sloučeno {{ entry.get_slot_ids()|length }} slotů
+                </span>
+              {% endif %}
+              {% if entry.shared_group_id %}
+                {% set others = shared_group_troops.get(entry.shared_group_id, []) | selectattr('id', 'ne', troop.id) | list %}
+                <span class="badge bg-success ms-1" style="font-size:.65rem">
+                  <i class="bi bi-people-fill"></i>
+                  {% if others %}s: {{ others | map(attribute='name') | join(', ') }}{% else %}společný program{% endif %}
+                </span>
+              {% endif %}
+            </span>
+            {% if cancelled %}
+              <span title="Ruší táborová hra"><i class="bi bi-exclamation-triangle-fill text-danger"></i></span>
+            {% endif %}
+            {% if edit_mode %}
+            <a href="{{ url_for('edit_entry', camp_id=camp.id, troop_id=troop.id, date=day.isoformat(), slot_id=slot.id) }}"
+               class="btn btn-sm btn-outline-secondary py-0 px-2">upravit</a>
+            <a href="{{ url_for('delete_entry', entry_id=entry.id) }}"
+               class="btn btn-sm btn-outline-danger py-0 px-2"
+               onclick="return confirm('Smazat záznam?')">
+              <i class="bi bi-trash"></i>
+            </a>
+            {% endif %}
+          {% else %}
+            <span class="text-muted fst-italic small flex-grow-1">↑ {{ entry.title or '—' }} <span class="opacity-50">(sloučeno)</span></span>
+          {% endif %}
+        {% elif cancelled and slot.id in game_slot_map %}
+          {% set game = game_slot_map[slot.id] %}
+          {% set gtype2 = game.entry_type or 'hra' %}
+          <span class="flex-grow-1" style="color:#1565c0;font-size:.88rem">
+            <i class="bi {{ GAME_TYPE_ICONS[gtype2] }} me-1"></i>{{ GAME_TYPE_LABELS[gtype2] }}: {{ game.title or '—' }}
+          </span>
+        {% else %}
+          {% set slot_game = game_slot_map.get(slot.id) %}
+          {% if not slot_game or (slot_game.entry_type or 'hra') == 'hra' %}
+            <span class="text-muted small flex-grow-1">— nevyplněno</span>
+            {% if edit_mode %}
+            <a href="{{ url_for('edit_entry', camp_id=camp.id, troop_id=troop.id, date=day.isoformat(), slot_id=slot.id) }}"
+               class="btn btn-sm btn-outline-success py-0 px-2">
+              <i class="bi bi-plus"></i> Přidat
+            </a>
+            {% endif %}
+          {% endif %}
+        {% endif %}
+      </div>
+    {% endfor %}
+
+    {% if not troops %}
+      <div class="p-3 text-muted small">Žádné oddíly / družiny. Přidej je v admin rozhraní.</div>
+    {% endif %}
+
+  </div>{# /slot-block #}
+
+{% endfor %}
+
+{% if not slots %}
+  <div class="alert alert-warning">
+    Nejsou definovány žádné časové sloty.
+    {% if session.get('is_admin') %}
+      <a href="{{ url_for('admin_slots', camp_id=camp.id) }}">Přidat sloty v admin rozhraní.</a>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% endblock %}

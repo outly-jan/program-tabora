@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Výzvy – {{ day.strftime('%-d. %-m.') }}{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center gap-2 mb-3">
+  <a href="{{ url_for('program_day', camp_id=camp.id, date_str=day.isoformat()) }}"
+     class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+  <h5 class="mb-0">Výzvy — {{ ['Pondělí','Úterý','Středa','Čtvrtek','Pátek','Sobota','Neděle'][day.weekday()] }} {{ day.strftime('%-d. %-m. %Y') }}</h5>
+</div>
+
+{# Přehled oblastí #}
+<div class="row g-3 mb-4">
+  {% for area_key, area_label in CHALLENGE_AREAS.items() %}
+    <div class="col-12 col-md-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-header fw-semibold py-2">
+          {{ AREA_ICONS[area_key] }}
+        </div>
+        <div class="card-body py-2">
+          {% set area_entries = entries | selectattr('area', 'eq', area_key) | list %}
+          {% if area_entries %}
+            {% for e in area_entries | sort(attribute='time_from') %}
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge" style="background:{{ CHALLENGE_COLORS[e.challenge] }}">
+                  <i class="bi bi-trophy-fill me-1"></i>{{ CHALLENGE_NAMES[e.challenge] }}
+                </span>
+                <span class="small">{{ e.time_from }}–{{ e.time_to }}
+                  {% if e.time_from > e.time_to %}
+                    <span class="badge bg-secondary ms-1" style="font-size:.68rem" title="Výzva přesahuje půlnoc a pokračuje do dalšího dne">
+                      <i class="bi bi-moon-stars-fill"></i> přes noc
+                    </span>
+                  {% endif %}
+                </span>
+                <form method="post" action="{{ url_for('delete_challenge', entry_id=e.id) }}"
+                      class="ms-auto"
+                      onsubmit="return confirm('Smazat výzvu?')">
+                  <button class="btn btn-xs btn-sm btn-outline-danger py-0 px-2">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </div>
+            {% endfor %}
+          {% else %}
+            <span class="text-muted small">— žádná výzva</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+{# Formulář pro přidání výzvy #}
+<div class="card shadow-sm" style="max-width:520px">
+  <div class="card-header fw-semibold py-2">
+    <i class="bi bi-plus-circle me-1"></i> Přidat výzvu
+  </div>
+  <div class="card-body">
+    <form method="post">
+      <input type="hidden" name="camp_id" value="{{ camp.id }}">
+      <input type="hidden" name="date"    value="{{ day.isoformat() }}">
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Výzva</label>
+        <div class="d-flex flex-wrap gap-2">
+          {% for key, label in CHALLENGE_NAMES.items() %}
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="challenge"
+                     id="ch_{{ key }}" value="{{ key }}" required>
+              <label class="form-check-label" for="ch_{{ key }}">
+                <span class="badge" style="background:{{ CHALLENGE_COLORS[key] }}">
+                  <i class="bi bi-trophy-fill me-1"></i>{{ label }}
+                </span>
+              </label>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Oblast</label>
+        <div class="d-flex flex-wrap gap-2">
+          {% for key, label in CHALLENGE_AREAS.items() %}
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="area"
+                     id="ar_{{ key }}" value="{{ key }}" required>
+              <label class="form-check-label" for="ar_{{ key }}">{{ AREA_ICONS[key] }}</label>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="row g-2 mb-1">
+        <div class="col-6">
+          <label class="form-label">Od</label>
+          <input type="time" name="time_from" id="tf_input" class="form-control" step="300" required>
+        </div>
+        <div class="col-6">
+          <label class="form-label">Do</label>
+          <input type="time" name="time_to" id="tt_input" class="form-control" step="300" required>
+        </div>
+      </div>
+      <div id="overnight_hint" class="small text-secondary mb-3" style="display:none">
+        <i class="bi bi-moon-stars-fill me-1"></i>
+        Konec je před začátkem — výzva bude uložena jako <strong>přesnoční</strong> (pokračuje do dalšího dne).
+      </div>
+      <div id="time_error" class="small text-danger mb-3" style="display:none">
+        <i class="bi bi-exclamation-circle me-1"></i>
+        Začátek a konec nesmí být stejný čas.
+      </div>
+
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-check-lg me-1"></i> Přidat výzvu
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+(function() {
+  const tf = document.getElementById('tf_input');
+  const tt = document.getElementById('tt_input');
+  const hint = document.getElementById('overnight_hint');
+  const err  = document.getElementById('time_error');
+
+  function check() {
+    if (!tf.value || !tt.value) { hint.style.display='none'; err.style.display='none'; return; }
+    if (tf.value === tt.value) {
+      hint.style.display = 'none';
+      err.style.display  = 'block';
+    } else if (tt.value < tf.value) {
+      hint.style.display = 'block';
+      err.style.display  = 'none';
+    } else {
+      hint.style.display = 'none';
+      err.style.display  = 'none';
+    }
+  }
+
+  tf.addEventListener('change', check);
+  tt.addEventListener('change', check);
+
+  tf.closest('form').addEventListener('submit', function(e) {
+    if (tf.value && tt.value && tf.value === tt.value) {
+      e.preventDefault();
+      err.style.display = 'block';
+    }
+  });
+})();
+</script>
+
+{% endblock %}

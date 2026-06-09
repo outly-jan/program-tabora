@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Historie změn – {{ camp.name }}{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+  <a href="{{ url_for('index') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h5 class="mb-0"><i class="bi bi-clock-history me-1"></i>Historie změn — {{ camp.name }}</h5>
+  <span class="text-muted small ms-2">celkem {{ total }} záznamů</span>
+</div>
+
+{% set _icons = {
+  'program':  'bi-table text-success',
+  'hra':      'bi-dice-5-fill text-primary',
+  'aktivita': 'bi-fire text-success',
+  'meals':    'bi-egg-fried text-warning',
+  'service':  'bi-robot text-secondary',
+  'challenge':'bi-trophy-fill',
+  'item':     'bi-tools text-secondary'
+} %}
+
+{% if entries %}
+  <div class="card shadow-sm" style="max-width:780px">
+    <div class="list-group list-group-flush">
+      {% for entry in entries %}
+        <div class="list-group-item d-flex align-items-start gap-3 py-2">
+          <i class="bi {{ _icons.get(entry.category, 'bi-circle') }} flex-shrink-0 mt-1" style="width:14px"></i>
+          <span class="text-muted flex-shrink-0" style="font-size:.78rem;white-space:nowrap;min-width:100px">{{ entry.timestamp_display }}</span>
+          <span class="flex-grow-1" style="font-size:.88rem">{{ entry.description }}</span>
+          {% if entry.link_url %}
+            <a href="{{ entry.link_url }}" class="flex-shrink-0 btn btn-sm btn-outline-secondary py-0 px-2" style="font-size:.72rem">→</a>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# Stránkování #}
+  <div class="d-flex gap-2 mt-3 align-items-center" style="max-width:780px">
+    {% if has_prev %}
+      <a href="{{ url_for('activity_log_page', camp_id=camp.id, page=page-1) }}"
+         class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-chevron-left"></i> Novější
+      </a>
+    {% endif %}
+    <span class="text-muted small">Strana {{ page }} / {{ ((total - 1) // per_page + 1) }}</span>
+    {% if has_next %}
+      <a href="{{ url_for('activity_log_page', camp_id=camp.id, page=page+1) }}"
+         class="btn btn-sm btn-outline-secondary ms-auto">
+        Starší <i class="bi bi-chevron-right"></i>
+      </a>
+    {% endif %}
+  </div>
+{% else %}
+  <div class="alert alert-info" style="max-width:500px">Zatím nejsou žádné záznamy.</div>
+{% endif %}
+
+{% endblock %}

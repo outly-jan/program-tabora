@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Přehled – Program tábora{% endblock %}
+{% block content %}
+
+{% if not camp %}
+  <div class="alert alert-info">
+    Zatím není žádný tábor. {% if session.get('is_admin') %}<a href="{{ url_for('admin') }}">Vytvořit tábor v admin rozhraní.</a>{% endif %}
+  </div>
+{% else %}
+
+{# Výběr tábora #}
+<div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+  <strong>Tábor:</strong>
+  {% for c in camps %}
+    <a href="{{ url_for('select_camp', camp_id=c.id) }}"
+       class="btn btn-sm {{ 'btn-dark' if c.id == camp.id else 'btn-outline-secondary' }}">
+      {{ c.name }}
+    </a>
+  {% endfor %}
+</div>
+
+<h5 class="mb-1">{{ camp.name }}</h5>
+<p class="text-muted small mb-4">
+  {{ camp.date_from.strftime('%-d. %-m. %Y') }} – {{ camp.date_to.strftime('%-d. %-m. %Y') }}
+  &nbsp;·&nbsp; {{ camp.get_days()|length }} dní
+</p>
+
+{# ── Přehledy dle oblastí ── #}
+<h6 class="text-muted mb-2">Přehledy dle oblastí</h6>
+<div class="row g-2">
+  <div class="col-6 col-sm-4 col-md-2">
+    <a href="{{ url_for('meals_overview', camp_id=camp.id) }}"
+       class="card text-decoration-none h-100" style="color:#f57f17">
+      <div class="card-body text-center py-3 px-1">
+        <i class="bi bi-egg-fried" style="font-size:2rem"></i>
+        <div class="small fw-semibold mt-1 text-dark">Jídelníček</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-sm-4 col-md-2">
+    <a href="{{ url_for('service_overview', camp_id=camp.id) }}"
+       class="card text-decoration-none h-100" style="color:#9c27b0">
+      <div class="card-body text-center py-3 px-1">
+        <i class="bi bi-robot" style="font-size:2rem"></i>
+        <div class="small fw-semibold mt-1 text-dark">Služby</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-sm-4 col-md-2">
+    <a href="{{ url_for('game_overview', camp_id=camp.id, entry_type='hra') }}"
+       class="card text-decoration-none text-primary h-100">
+      <div class="card-body text-center py-3 px-1">
+        <i class="bi bi-dice-5-fill" style="font-size:2rem"></i>
+        <div class="small fw-semibold mt-1 text-dark">Táborová hra</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-sm-4 col-md-2">
+    <a href="{{ url_for('game_overview', camp_id=camp.id, entry_type='aktivita') }}"
+       class="card text-decoration-none text-success h-100">
+      <div class="card-body text-center py-3 px-1">
+        <i class="bi bi-fire" style="font-size:2rem"></i>
+        <div class="small fw-semibold mt-1 text-dark">Celotáborové aktivity</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-sm-4 col-md-2">
+    <a href="{{ url_for('challenges_overview', camp_id=camp.id) }}"
+       class="card text-decoration-none h-100" style="color:#E65100">
+      <div class="card-body text-center py-3 px-1">
+        <i class="bi bi-trophy-fill" style="font-size:2rem"></i>
+        <div class="small fw-semibold mt-1 text-dark">Výzvy</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-sm-4 col-md-2">
+    <a href="{{ url_for('teepee_overview', camp_id=camp.id) }}"
+       class="card text-decoration-none h-100" style="color:#6B5B3E">
+      <div class="card-body text-center py-3 px-1">
+        <i class="bi bi-wifi" style="font-size:2rem;transform:rotate(180deg);display:inline-block"></i>
+        <div class="small fw-semibold mt-1 text-dark">Tee-pee</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-sm-4 col-md-2">
+    <a href="{{ url_for('master_overview', camp_id=camp.id) }}"
+       class="card text-decoration-none text-dark h-100">
+      <div class="card-body text-center py-3 px-1">
+        <i class="bi bi-journal-text" style="font-size:2rem"></i>
+        <div class="small fw-semibold mt-1">Celkový přehled</div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<div style="margin: 48px 0 0"></div>
+
+{# ── Program oddílů / družin ── #}
+<h6 class="text-muted mb-2">Program oddílů / družin</h6>
+<div class="d-flex flex-wrap gap-2">
+  {% for troop in camp.troops %}
+    <a href="{{ url_for('troop_program', camp_id=camp.id, troop_id=troop.id) }}"
+       class="btn btn-sm"
+       style="background:{{ troop.color }};color:{{ text_color(troop.color) }}">
+      <i class="bi bi-table me-1"></i>{{ troop.name }}
+    </a>
+  {% endfor %}
+</div>
+
+<div style="margin: 48px 0 0"></div>
+
+{# ── Zobrazení dle dnů (kalendář) ── #}
+{% set dn = ['Po','Út','St','Čt','Pá','So','Ne'] %}
+<h6 class="text-muted mb-2">Zobrazení dle dnů</h6>
+<div class="d-flex gap-2 align-items-start flex-wrap">
+  {% for col in calendar_cols %}
+    <div class="d-flex flex-column gap-1">
+      {% for day in col %}
+        {% if day %}
+          <a href="{{ url_for('program_day', camp_id=camp.id, date_str=day.isoformat()) }}"
+             class="card text-decoration-none text-dark" style="width:64px">
+            <div class="card-body text-center p-1">
+              <div class="fw-bold" style="font-size:.95rem">{{ dn[day.weekday()] }}</div>
+              <div class="text-muted" style="font-size:.65rem">{{ day.strftime('%-d. %-m.') }}</div>
+              <div class="text-muted" style="font-size:.6rem">Den {{ day_index_map[day] }}</div>
+            </div>
+          </a>
+        {% else %}
+          {# Prázdný slot – zachová výšku vč. borderu pro přesné zarovnání #}
+          <div class="card" style="width:64px;visibility:hidden;pointer-events:none">
+            <div class="card-body text-center p-1">
+              <div style="font-size:.95rem">&nbsp;</div>
+              <div style="font-size:.65rem">&nbsp;</div>
+              <div style="font-size:.6rem">&nbsp;</div>
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% endfor %}
+</div>
+
+<div style="margin: 48px 0 0"></div>
+
+{# ── Export ── #}
+<a href="{{ url_for('export_excel', camp_id=camp.id) }}" class="btn btn-success">
+  <i class="bi bi-file-earmark-excel me-1"></i>Export do Excelu
+</a>
+
+{% if activity_log %}
+<div style="margin: 48px 0 0"></div>
+<div class="d-flex align-items-baseline gap-3 mb-2">
+  <h6 class="text-muted mb-0">Poslední změny</h6>
+  <a href="{{ url_for('activity_log_page', camp_id=camp.id) }}" class="small text-decoration-none text-muted">
+    <i class="bi bi-clock-history me-1"></i>Zobrazit historii →
+  </a>
+</div>
+{% set _icons = {
+  'program':  'bi-table text-success',
+  'hra':      'bi-dice-5-fill text-primary',
+  'aktivita': 'bi-fire text-success',
+  'meals':    'bi-egg-fried text-warning',
+  'service':  'bi-robot text-secondary',
+  'challenge':'bi-trophy-fill',
+  'item':     'bi-tools text-secondary'
+} %}
+<div style="max-width:740px">
+  {% for entry in activity_log %}
+    <div class="d-flex align-items-start gap-3 py-2 border-bottom" style="font-size:.85rem">
+      <i class="bi {{ _icons.get(entry.category, 'bi-circle') }} flex-shrink-0 mt-1" style="width:14px"></i>
+      <span class="text-muted flex-shrink-0" style="font-size:.75rem;white-space:nowrap;min-width:96px">{{ entry.timestamp_display }}</span>
+      <span class="flex-grow-1">{{ entry.description }}</span>
+      {% if entry.link_url %}
+        <a href="{{ entry.link_url }}" class="flex-shrink-0 btn btn-sm btn-outline-secondary py-0 px-2" style="font-size:.7rem">→</a>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% endif %}
+{% endblock %}

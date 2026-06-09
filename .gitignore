@@ -1,0 +1,28 @@
+# Databáze
+*.db
+*_backup.db
+tabor.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtuální prostředí
+venv/
+env/
+.env
+
+# Zálohy a exporty
+*.xlsx
+*_backup*
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

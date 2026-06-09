@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Služba & rádce – {{ day.strftime('%-d. %-m.') }}{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center gap-2 mb-3">
+  <a href="{{ url_for('program_day', camp_id=camp.id, date_str=day.isoformat()) }}"
+     class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+  <h5 class="mb-0">Služba & rádce dne — {{ day.strftime('%-d. %-m. %Y') }}</h5>
+</div>
+
+<form method="post" class="card shadow-sm">
+  <div class="card-body">
+    <input type="hidden" name="camp_id" value="{{ camp.id }}">
+    <input type="hidden" name="date"    value="{{ day.isoformat() }}">
+    <input type="hidden" name="next"    value="{{ next_url or '' }}">
+
+    {% for st in svc_templates %}
+      {% set svcs = svc_map.get(st.slot_number, []) %}
+      {% set checked_ids = svcs | map(attribute='troop_id') | list %}
+      {% set adv = advisor_map.get(st.slot_number) %}
+      <div class="card mb-3 border-secondary">
+        <div class="card-header bg-light fw-semibold py-2">
+          Blok {{ st.slot_number }}
+          <span class="text-muted fw-normal">({{ st.time_from }}–{{ st.time_to }})</span>
+        </div>
+        <div class="card-body py-2">
+          <div class="mb-2">
+            <label class="form-label mb-1">Oddíl / Družina na službě (lze vybrat více)</label>
+            {% for troop in troops %}
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox"
+                       name="service_{{ st.slot_number }}" value="{{ troop.id }}"
+                       id="svc_{{ st.slot_number }}_{{ troop.id }}"
+                       {% if troop.id in checked_ids %}checked{% endif %}>
+                <label class="form-check-label d-flex align-items-center gap-2"
+                       for="svc_{{ st.slot_number }}_{{ troop.id }}">
+                  <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:{{ troop.color }};flex-shrink:0"></span>
+                  {{ troop.name }}
+                </label>
+              </div>
+            {% endfor %}
+          </div>
+          <div>
+            <label class="form-label mb-1">Rádce / Rádkyně dne</label>
+            <input type="text" name="advisor_{{ st.slot_number }}" class="form-control"
+                   value="{{ adv.name if adv else '' }}"
+                   placeholder="Jméno rádce/rádkyně">
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Uložit</button>
+      <a href="{{ next_url or url_for('program_day', camp_id=camp.id, date_str=day.isoformat()) }}"
+         class="btn btn-outline-secondary">Zrušit</a>
+    </div>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Slot služby {{ slot.slot_number }}{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center gap-2 mb-3">
+  <a href="{{ url_for('admin_slots', camp_id=camp.id) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+  <h5 class="mb-0">Slot služby {{ slot.slot_number }} — {{ camp.name }}</h5>
+</div>
+
+<form method="post" class="card shadow-sm" style="max-width:480px">
+  <div class="card-body">
+    <p class="text-muted small">Nastav výchozí časové rozmezí pro slot služby č. {{ slot.slot_number }}.</p>
+    <div class="row g-2 mb-3">
+      <div class="col-6">
+        <label class="form-label fw-semibold">Začátek</label>
+        <input type="time" name="time_from" class="form-control" step="300" required
+               value="{{ slot.time_from }}">
+      </div>
+      <div class="col-6">
+        <label class="form-label fw-semibold">Konec</label>
+        <input type="time" name="time_to" class="form-control" step="300" required
+               value="{{ slot.time_to }}">
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Uložit</button>
+      <a href="{{ url_for('admin_slots', camp_id=camp.id) }}" class="btn btn-outline-secondary">Zrušit</a>
+    </div>
+  </div>
+</form>
+{% endblock %}

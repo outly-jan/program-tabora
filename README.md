@@ -1,6 +1,6 @@
 # Program tábora
 
-Webová aplikace pro správu programu letního tábora. Nasazená na [programtabora.pythonanywhere.com](https://programtabora.pythonanywhere.com).
+Webová aplikace pro správu programu letního tábora.  
 
 ## Co aplikace umí
 
@@ -30,6 +30,4 @@ python flask_app.py
 
 Aplikace poběží na `http://localhost:5000`.
 
-Výchozí hesla:
-- `havran` – běžný uživatel
-- `Havran.2026` – administrátor
+Pro výchozí přístupová hesla kontaktujte autora

@@ -1324,25 +1324,33 @@ def edit_entry():
         share_with_ids = [int(x) for x in request.form.getlist('share_with_troop_id')]
         all_other_ids  = [t.id for t in other_troops]
 
-        # Smaž staré sdílené záznamy z předchozího sdílení tohoto slotu
+        # Smaž staré sdílené záznamy z předchozího sdílení tohoto slotu.
+        # Používáme bulk delete (synchronize_session=False), aby SQLAlchemy
+        # nevydal UPDATE entry_id=NULL před DELETE – to by padlo na NOT NULL.
         if existing and existing.shared_group_id:
-            for e in ProgramEntry.query.filter_by(
+            shared_ids_to_del = [
+                e.id for e in ProgramEntry.query.filter_by(
                     camp_id=camp_id, date=day,
-                    shared_group_id=existing.shared_group_id).all():
-                if e.troop_id != troop_id:
-                    db.session.delete(e)
+                    shared_group_id=existing.shared_group_id).all()
+                if e.troop_id != troop_id
+            ]
+            if shared_ids_to_del:
+                ProgramEntry.query.filter(
+                    ProgramEntry.id.in_(shared_ids_to_del)
+                ).delete(synchronize_session=False)
             db.session.commit()
 
-        # Smaž přebývající záznamy pokrývající tyto sloty (aktuálního oddílu)
-        # – zachovej přitom seznam pomůcek pro přesun na nový záznam
-        # POZOR: pomůcky načítáme AŽ PO commitu smazání; kdyby byly v session
-        # dřív, SQLAlchemy by se pokusil při DELETE nastavit entry_id=NULL, což
-        # selže (nullable=False) a způsobí IntegrityError / 500.
-        old_entry_ids = []
-        for e in ProgramEntry.query.filter_by(camp_id=camp_id, troop_id=troop_id, date=day).all():
-            if set(e.get_slot_ids()) & set(slot_ids):
-                old_entry_ids.append(e.id)
-                db.session.delete(e)
+        # Smaž přebývající záznamy pokrývající tyto sloty (aktuálního oddílu).
+        # Bulk delete obchází ORM cascade → SQLAlchemy nevydá UPDATE entry_id=NULL.
+        old_entry_ids = [
+            e.id for e in ProgramEntry.query.filter_by(
+                camp_id=camp_id, troop_id=troop_id, date=day).all()
+            if set(e.get_slot_ids()) & set(slot_ids)
+        ]
+        if old_entry_ids:
+            ProgramEntry.query.filter(
+                ProgramEntry.id.in_(old_entry_ids)
+            ).delete(synchronize_session=False)
         db.session.commit()
         saved_items = []
         for old_id in old_entry_ids:
@@ -1397,10 +1405,15 @@ def edit_entry():
                 elif svc_conf:
                     warnings.append(f'"{share_troop.name}" (na službě)')
                 else:
-                    for e in ProgramEntry.query.filter_by(
-                            camp_id=camp_id, troop_id=share_id, date=day).all():
-                        if set(e.get_slot_ids()) & set(slot_ids):
-                            db.session.delete(e)
+                    conflict_ids = [
+                        e.id for e in ProgramEntry.query.filter_by(
+                            camp_id=camp_id, troop_id=share_id, date=day).all()
+                        if set(e.get_slot_ids()) & set(slot_ids)
+                    ]
+                    if conflict_ids:
+                        ProgramEntry.query.filter(
+                            ProgramEntry.id.in_(conflict_ids)
+                        ).delete(synchronize_session=False)
                     db.session.commit()
                     db.session.add(ProgramEntry(
                         camp_id=camp_id, troop_id=share_id, date=day,

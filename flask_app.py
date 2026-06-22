@@ -1,5 +1,7 @@
 import os
 import json
+import logging
+import traceback
 from io import BytesIO
 from datetime import date, timedelta, datetime
 from flask import (Flask, render_template, request, session,
@@ -16,6 +18,12 @@ app.config['SQLALCHEMY_DATABASE_URI'] = (
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
+
+@app.errorhandler(500)
+def internal_error(e):
+    db.session.rollback()
+    app.logger.error('500 chyba:\n' + traceback.format_exc())
+    return render_template('500.html'), 500
 
 # ── Paleta barev (Word-like) ─────────────────────────────────────────────────
 PALETTE_COLORS = [
@@ -1356,6 +1364,9 @@ def edit_entry():
         # Sdílení programu s jinými oddíly / družinami
         if share_with_ids and set(all_other_ids).issubset(set(share_with_ids)):
             # Vybrány VŠECHNY oddíly → převést na celotáborovou aktivitu
+            # Smaž pomůcky nového záznamu (SQLAlchemy cascade by jinak nastavil entry_id=NULL)
+            ProgramItem.query.filter_by(entry_id=entry.id).delete(synchronize_session=False)
+            db.session.flush()
             db.session.delete(entry)
             for g in CampGameEntry.query.filter_by(camp_id=camp_id, date=day).all():
                 if set(g.get_slot_ids()) & set(slot_ids):
@@ -2092,6 +2103,20 @@ with app.app_context():
         if 'teepee' not in _pe_cols:
             _conn.execute(text(
                 'ALTER TABLE program_entry ADD COLUMN teepee BOOLEAN DEFAULT 0'))
+            _conn.commit()
+        _pi_cols = {r[1] for r in _conn.execute(text('PRAGMA table_info(program_item)'))}
+        if 'camp_id' not in _pi_cols:
+            _conn.execute(text(
+                'ALTER TABLE program_item ADD COLUMN camp_id INTEGER REFERENCES camp(id)'))
+            _conn.commit()
+        if 'checked' not in _pi_cols:
+            _conn.execute(text(
+                'ALTER TABLE program_item ADD COLUMN checked BOOLEAN NOT NULL DEFAULT 0'))
+            _conn.commit()
+        _se_cols = {r[1] for r in _conn.execute(text('PRAGMA table_info(service_entry)'))}
+        if 'troop_id' not in _se_cols:
+            _conn.execute(text(
+                'ALTER TABLE service_entry ADD COLUMN troop_id INTEGER REFERENCES troop(id)'))
             _conn.commit()
 
 if __name__ == '__main__':

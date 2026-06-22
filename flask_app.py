@@ -1327,12 +1327,18 @@ def edit_entry():
 
         # Smaž přebývající záznamy pokrývající tyto sloty (aktuálního oddílu)
         # – zachovej přitom seznam pomůcek pro přesun na nový záznam
-        saved_items = []
+        # POZOR: pomůcky načítáme AŽ PO commitu smazání; kdyby byly v session
+        # dřív, SQLAlchemy by se pokusil při DELETE nastavit entry_id=NULL, což
+        # selže (nullable=False) a způsobí IntegrityError / 500.
+        old_entry_ids = []
         for e in ProgramEntry.query.filter_by(camp_id=camp_id, troop_id=troop_id, date=day).all():
             if set(e.get_slot_ids()) & set(slot_ids):
-                saved_items.extend(ProgramItem.query.filter_by(entry_id=e.id).all())
+                old_entry_ids.append(e.id)
                 db.session.delete(e)
         db.session.commit()
+        saved_items = []
+        for old_id in old_entry_ids:
+            saved_items.extend(ProgramItem.query.filter_by(entry_id=old_id).all())
 
         entry = ProgramEntry(
             camp_id=camp_id, troop_id=troop_id, date=day,

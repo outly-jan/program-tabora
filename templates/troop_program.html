@@ -28,7 +28,7 @@
       <tr>
         <th style="min-width:80px">Den</th>
         {% for slot in slots %}
-          <th>{{ slot.name }}<br><span class="fw-normal opacity-75" style="font-size:.75rem">{{ slot.time_from }}–{{ slot.time_to }}</span></th>
+          <th class="{% if slot.id in double_border_slot_ids %}td-break-left{% endif %}">{{ slot.name }}<br><span class="fw-normal opacity-75" style="font-size:.75rem">{{ slot.time_from }}–{{ slot.time_to }}</span></th>
         {% endfor %}
       </tr>
     </thead>
@@ -51,6 +51,7 @@
             {% set game  = dd.game_slot_map.get(slot.id) %}
             {% set cancelled = slot.id in dd.cancelled_slots and troop.id not in dd.cancel_exceptions_map.get(slot.id, []) %}
             {% set svc_info = dd.slot_service_map.get(slot.id) %}
+            {% set dbl = 'td-break-left' if slot.id in double_border_slot_ids else '' %}
 
             {% if entry and entry.id not in shown_entries %}
               {% set ns = namespace(span=0) %}
@@ -59,10 +60,10 @@
               {% endfor %}
               {% if ns.span > 1 %}
                 <td colspan="{{ ns.span }}"
-                    class="{% if cancelled %}cancelled-overlay{% endif %}"
+                    class="{% if cancelled %}cancelled-overlay{% endif %} {{ dbl }}"
                     style="background:{{ troop.color }}22">
               {% else %}
-                <td class="{% if cancelled %}cancelled-overlay{% endif %}"
+                <td class="{% if cancelled %}cancelled-overlay{% endif %} {{ dbl }}"
                     style="background:{{ troop.color }}22">
               {% endif %}
                 {% if cancelled %}
@@ -153,9 +154,9 @@
               {% set gtype = game.entry_type or 'hra' %}
               {% set gcol  = GAME_TYPE_COLORS[gtype] %}
               {% if ns_g.gspan > 1 %}
-                <td colspan="{{ ns_g.gspan }}" class="text-center" style="background:{{ gcol.bg }}">
+                <td colspan="{{ ns_g.gspan }}" class="text-center {{ dbl }}" style="background:{{ gcol.bg }}">
               {% else %}
-                <td class="text-center" style="background:{{ gcol.bg }}">
+                <td class="text-center {{ dbl }}" style="background:{{ gcol.bg }}">
               {% endif %}
                 <i class="bi {{ GAME_TYPE_ICONS[gtype] }} {{ gcol.text }} me-1"></i>
                 <span style="font-size:.8rem">{{ game.title or GAME_TYPE_LABELS[gtype] }}</span>
@@ -214,7 +215,7 @@
               {% set _hide_for_troop = (game.cancels_troop_program and not cancelled) or (not game.cancels_troop_program and troop.id in game.get_except_troop_ids()) %}
               {% if _hide_for_troop %}
                 {# Výjimka z rušení nebo opt-out – zobrazit jako prázdný slot #}
-                {% if ns_g.gspan > 1 %}<td colspan="{{ ns_g.gspan }}">{% else %}<td>{% endif %}
+                {% if ns_g.gspan > 1 %}<td colspan="{{ ns_g.gspan }}" class="{{ dbl }}">{% else %}<td class="{{ dbl }}">{% endif %}
                   {% if edit_mode %}
                     <a href="{{ url_for('edit_entry', camp_id=camp.id, troop_id=troop.id, date=dd.day.isoformat(), slot_id=slot.id, next=back_url) }}"
                        class="btn btn-sm btn-outline-success py-0 px-1" style="font-size:.72rem">
@@ -230,9 +231,9 @@
                 {% set gtype = game.entry_type or 'hra' %}
                 {% set gcol  = GAME_TYPE_COLORS[gtype] %}
                 {% if ns_g.gspan > 1 %}
-                  <td colspan="{{ ns_g.gspan }}" style="background:#fafafa">
+                  <td colspan="{{ ns_g.gspan }}" class="{{ dbl }}" style="background:#fafafa">
                 {% else %}
-                  <td style="background:#fafafa">
+                  <td class="{{ dbl }}" style="background:#fafafa">
                 {% endif %}
                   <div style="font-size:.75rem;margin-top:2px">
                     <i class="bi {{ GAME_TYPE_ICONS[gtype] }} {{ gcol.text }} me-1"></i>
@@ -283,7 +284,7 @@
               {% endfor %}
 
             {% else %}
-              <td>
+              <td class="{{ dbl }}">
                 {% set slot_chs = dd.slot_challenge_map.get(slot.id, []) %}
                 {% if svc_info %}
                   <div style="font-size:.72rem;color:#9c27b0">

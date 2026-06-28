@@ -456,6 +456,19 @@ def troop_program(camp_id, troop_id):
     camp  = Camp.query.get_or_404(camp_id)
     troop = Troop.query.get_or_404(troop_id)
     slots = SlotTemplate.query.filter_by(camp_id=camp_id).order_by(SlotTemplate.order).all()
+
+    double_border_slot_ids = set()
+    for _i, _s in enumerate(slots):
+        if _i > 0:
+            _ph, _pm = map(int, slots[_i - 1].time_to.split(':'))
+            _ch, _cm = map(int, _s.time_from.split(':'))
+            _prev = _ph * 60 + _pm
+            _curr = _ch * 60 + _cm
+            if _curr < _prev:
+                _curr += 24 * 60
+            if _curr - _prev >= 60:
+                double_border_slot_ids.add(_s.id)
+
     svc_templates = (ServiceSlotTemplate.query
                      .filter_by(camp_id=camp_id)
                      .order_by(ServiceSlotTemplate.slot_number).all())
@@ -537,7 +550,8 @@ def troop_program(camp_id, troop_id):
         camp=camp, troop=troop, slots=slots, days_data=days_data,
         shared_map=shared_map, INTENSITY_LABELS=INTENSITY_LABELS,
         all_items=all_items, edit_mode=edit_mode,
-        last_slot_time_to=last_slot_time_to)
+        last_slot_time_to=last_slot_time_to,
+        double_border_slot_ids=double_border_slot_ids)
 
 
 @app.route('/meals_overview/<int:camp_id>')

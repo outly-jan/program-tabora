@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cmd=$(jq -r '.tool_input.command // \"\"'); if echo \"$cmd\" | grep -q 'git push'; then echo '{\"systemMessage\": \"Změny jsou na GitHubu. Teď spusť v PythonAnywhere bash konzoli:\\n\\ncurl -o ~/mysite/flask_app.py https://raw.githubusercontent.com/outly-jan/program-tabora/master/flask_app.py\\n\\nA pak klikni na Reload v záložce Web.\"}'; fi"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -63,8 +63,8 @@ GAME_TYPE_ICONS = {
     'aktivita': 'bi-fire',
 }
 GAME_TYPE_COLORS = {
-    'hra':      {'bg': '#e8f4fd', 'border': '#90caf9', 'text': 'text-primary'},
-    'aktivita': {'bg': '#e8f5e9', 'border': '#a5d6a7', 'text': 'text-success'},
+    'hra':      {'bg': '#e8f4fd', 'border': '#90caf9', 'text': 'text-primary',  'color': '#1565c0'},
+    'aktivita': {'bg': '#e8f5e9', 'border': '#a5d6a7', 'text': 'text-success',  'color': '#1b5e20'},
 }
 
 CHALLENGE_NAMES = {

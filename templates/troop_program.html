@@ -120,7 +120,7 @@
                   {% set _gc = GAME_TYPE_COLORS[_gt] %}
                   <div style="font-size:.72rem;margin-top:3px;padding:2px 4px;background:{{ _gc.bg }};border-radius:4px;border:1px solid {{ _gc.border }}">
                     <i class="bi {{ GAME_TYPE_ICONS[_gt] }} {{ _gc.text }} me-1"></i>
-                    <span style="color:{{ _gc.border }}">{{ game.title or GAME_TYPE_LABELS[_gt] }}</span>
+                    <span style="color:{{ _gc.color }}">{{ game.title or GAME_TYPE_LABELS[_gt] }}</span>
                   </div>
                 {% endif %}
                 {% if edit_mode %}

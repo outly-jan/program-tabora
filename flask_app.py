@@ -1412,12 +1412,8 @@ def edit_entry():
                 conflict = next((e for e in ProgramEntry.query.filter_by(
                         camp_id=camp_id, troop_id=share_id, date=day).all()
                     if set(e.get_slot_ids()) & set(slot_ids)), None)
-                svc_conf = ServiceEntry.query.filter_by(
-                    camp_id=camp_id, date=day, troop_id=share_id).first()
                 if conflict:
                     warnings.append(f'"{share_troop.name}" (již má program)')
-                elif svc_conf:
-                    warnings.append(f'"{share_troop.name}" (na službě)')
                 else:
                     conflict_ids = [
                         e.id for e in ProgramEntry.query.filter_by(

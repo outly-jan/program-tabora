@@ -66,11 +66,13 @@
                 <td class="text-nowrap" style="font-size:.85rem">{{ entry.time_from }}–{{ entry.time_to }}</td>
                 {% if edit_mode %}
                   <td>
-                    <a href="{{ url_for('delete_challenge', entry_id=entry.id, next=back_url) }}"
-                       class="btn btn-sm btn-outline-danger py-0 px-2"
-                       onclick="return confirm('Smazat výzvu?')">
-                      <i class="bi bi-trash"></i>
-                    </a>
+                    <form method="post" action="{{ url_for('delete_challenge', entry_id=entry.id, next=back_url) }}"
+                          style="display:inline"
+                          onsubmit="return confirm('Smazat výzvu?')">
+                      <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
                   </td>
                 {% endif %}
               </tr>

@@ -73,9 +73,9 @@ CHALLENGE_NAMES = {
     'bile_tesaky': 'Bílé tesáky',
 }
 CHALLENGE_AREAS = {
-    'sever': 'Severně od tábora',
-    'zapad': 'Západně od tábora',
-    'jih':   'Jižně od tábora',
+    'sever': 'Severozápadně od tábora',
+    'zapad': 'Jižně od tábora',
+    'jih':   'Severovýchodně od tábora',
 }
 CHALLENGE_COLORS = {
     'orli_pera':   '#D4845A',
@@ -83,9 +83,9 @@ CHALLENGE_COLORS = {
     'bile_tesaky': '#7A909A',
 }
 AREA_ICONS = {
-    'sever': '↑ (severně od tábora)',
-    'zapad': '← (západně od tábora)',
-    'jih':   '↓ (jižně od tábora)',
+    'sever': '↖ (severozápadně od tábora)',
+    'zapad': '↓ (jižně od tábora)',
+    'jih':   '↗ (severovýchodně od tábora)',
 }
 
 # ── Modely ───────────────────────────────────────────────────────────────────
